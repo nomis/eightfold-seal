@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 
 #include <memory>
 
-namespace nutt {
+namespace octavo {
 
 class Logging {
 public:
@@ -35,7 +35,7 @@ public:
 	void set_sys_level(esp_log_level_t level);
 
 private:
-	static constexpr const char *TAG = "nutt.Logging";
+	static constexpr const char *TAG = "octavo.Logging";
 
 	static const char* to_string(esp_log_level_t level);
 
@@ -53,4 +53,4 @@ private:
 	esp_log_level_t default_level_{esp_log_default_level};
 };
 
-} // namespace nutt
+} // namespace octavo

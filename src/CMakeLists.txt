@@ -3,7 +3,7 @@ idf_component_register(
 		base64.cpp
 		debounce.cpp
 		device.cpp
-		light.cpp
+		door.cpp
 		log.cpp
 		main.cpp
 		ota.cpp
@@ -38,7 +38,7 @@ target_compile_options(
 		-Wshadow
 		-Werror
 		-DZLIB_CONST
-		-DNUTT_GIT_COMMIT_TIME=${git_commit_time}+0UL
+		-DOCTAVO_GIT_COMMIT_TIME=${git_commit_time}+0UL
 )
 
 target_link_libraries(

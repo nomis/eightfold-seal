@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 #include "debounce.h"
 #include "thread.h"
 
-namespace nutt {
+namespace octavo {
 
 class Device;
 class Logging;
@@ -73,6 +73,8 @@ struct LEDSequence {
 
 /* Ordered by priority (high to low) */
 enum class Event {
+	DOOR_ALARM2,
+	DOOR_ALARM1,
 	NETWORK_UNCONFIGURED_FAILED,
 	NETWORK_CONFIGURED_FAILED,
 	NETWORK_ERROR,
@@ -82,8 +84,8 @@ enum class Event {
 	NETWORK_UNCONFIGURED_DISCONNECTED,
 	OTA_UPDATE_ERROR,
 	IDENTIFY,
-	LIGHT_SWITCHED_REMOTE,
-	LIGHT_SWITCHED_LOCAL,
+	DOOR_OPENED,
+	DOOR_CLOSED,
 	OTA_UPDATE_OK,
 	CORE_DUMP_PRESENT,
 	NETWORK_CONNECT,
@@ -106,7 +108,7 @@ public:
 	~UserInterface() = delete;
 
 	// cppcheck-suppress duplInheritedMember
-	static constexpr const char *TAG = "nutt.UI";
+	static constexpr const char *TAG = "octavo.UI";
 
 	void attach(Device &device);
 	void start();
@@ -114,14 +116,16 @@ public:
 	void network_state(bool configured, ui::NetworkState state);
 	void network_error();
 	void identify(uint16_t seconds);
-	void light_switched(bool local);
+	void door_opened();
+	void door_closed();
+	void alarm_level(uint8_t level);
 	void ota_update(bool ok);
 	void core_dump(bool present);
 
 private:
 	static constexpr const unsigned long DEBOUNCE_PRESS_US = 100 * 1000;
 	static constexpr const unsigned long DEBOUNCE_RELEASE_US = 1 * 1000 * 1000;
-	static constexpr const uint8_t LED_LEVEL = CONFIG_NUTT_UI_LED_BRIGHTNESS;
+	static constexpr const uint8_t LED_LEVEL = CONFIG_OCTAVO_UI_LED_BRIGHTNESS;
 	static const std::unordered_map<ui::Event,ui::LEDSequence> led_sequences_;
 
 	unsigned long run_tasks() override;
@@ -152,4 +156,4 @@ private:
 	std::unordered_map<ui::Event,ui::LEDSequence> active_sequence_;
 };
 
-} // namespace nutt
+} // namespace octavo

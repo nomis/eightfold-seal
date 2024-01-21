@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #include <string>
 #include <string_view>
 
-namespace nutt {
+namespace octavo {
 
 std::string duration_us_to_string(uint64_t duration_us);
 
@@ -32,4 +32,4 @@ static inline std::string null_terminated_string(T(&data)[size]) {
 	return std::string{&data[0], found ? (found - &data[0]) : size};
 };
 
-} // namespace nutt
+} // namespace octavo

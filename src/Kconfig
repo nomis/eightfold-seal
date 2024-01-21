@@ -1,37 +1,37 @@
-menu "Candle Dribbler"
+menu "Eightfold Seal"
 	depends on ZB_ENABLED
 
-config NUTT_MAX_LIGHTS
-	int "Number of lights supported"
-	range 0 8
-	default 1
+config OCTAVO_MAX_DOORS
+	int "Number of doors supported"
+	range 0 4
+	default 2
 	help
-		Configure number of lights that are supported.
+		Configure number of doors that are supported.
 
-config NUTT_SWITCH_ACTIVE_LOW
+config OCTAVO_SWITCH_ACTIVE_LOW
 	bool "Switches are active low"
-	default y
+	default n
 	help
 		Configure whether switch signalling is active low or high.
 
-config NUTT_RELAY_ACTIVE_LOW
-	bool "Relays are active low"
-	default y
+config OCTAVO_BUZZER_ACTIVE_LOW
+	bool "Buzzer is active low"
+	default n
 	help
-		Configure whether relay signalling is active low or high.
+		Configure whether buzzer signalling is active low or high.
 
-config NUTT_UI_LED_BRIGHTNESS
+config OCTAVO_UI_LED_BRIGHTNESS
 	int "RGB LED brightness"
 	range 0 255
 	default 8
 	help
 		Configure LED brightness.
 
-config NUTT_ZIGBEE_ROLE_ROUTER
+config OCTAVO_ZIGBEE_ROLE_ROUTER
 	bool
 	default y if ZB_ZCZR
 
-menuconfig NUTT_SUPPORT_OTA
+menuconfig OCTAVO_SUPPORT_OTA
 	bool "Support OTA"
 	default n
 	help
@@ -42,15 +42,15 @@ menuconfig NUTT_SUPPORT_OTA
 		network. Updates will be marked valid automatically when a connection is
 		established to a network.
 
-if NUTT_SUPPORT_OTA
-	config NUTT_OTA_MANUFACTURER_ID
+if OCTAVO_SUPPORT_OTA
+	config OCTAVO_OTA_MANUFACTURER_ID
 		hex "Manufacturer ID"
 		range 0x0000 0xfffe
 		default 0
 		help
 			Configure Zigbee manufacturer ID for OTA updates.
 
-	config NUTT_OTA_IMAGE_TYPE_ID
+	config OCTAVO_OTA_IMAGE_TYPE_ID
 		hex "Image Type ID"
 		range 0x0000 0xfffe
 		default 0
@@ -58,7 +58,7 @@ if NUTT_SUPPORT_OTA
 			Configure image type ID (to uniquely identify this device model)
 			for OTA updates.
 
-    config NUTT_OTA_FILE_VERSION_FROM_GIT_COMMIT
+    config OCTAVO_OTA_FILE_VERSION_FROM_GIT_COMMIT
 		bool "Use Git commit timestamp as OTA file version"
 		default n
 		help
@@ -68,11 +68,11 @@ if NUTT_SUPPORT_OTA
 			This may go badly wrong while bisecting with older versions on a
 			network with an upgrade server.
 
-	config NUTT_OTA_FILE_VERSION
+	config OCTAVO_OTA_FILE_VERSION
 		hex "File Version"
 		range 0x00000000 0xffffffff
 		default 0
-		depends on !NUTT_OTA_FILE_VERSION_FROM_GIT_COMMIT
+		depends on !OCTAVO_OTA_FILE_VERSION_FROM_GIT_COMMIT
 		help
 			Configure the current file version (to identify which builds are
 			newer).

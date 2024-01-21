@@ -1,8 +1,8 @@
 #!/bin/bash
 if [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
-	echo "Usage: $0 <old suffix|-> <new id> <new name> <light> [light] [light] [light]"
+	echo "Usage: $0 <old suffix|-> <new id> <new name> <door> [door] [door] [door]"
 	echo
-	echo "Example: $0 uuid_uk_candle_dribbler candle_dribbler_1 \"Candle Dribbler 1\" A B C D"
+	echo "Example: $0 uuid_uk_eightfold_seal eightfold_seal_1 \"Eightfold Seal 1\" 1 2"
 	exit 1
 fi
 OLD="$1"
@@ -10,74 +10,48 @@ NEW="$2"
 NAME="$3"
 [ "$OLD" = "-" ] && OLD=""
 shift 3
-LIGHTS=("$@")
+DOORS=("$@")
 
 function generate_file() {
 	echo "{"
 
-	light=1
-	switch=1
 	binary_sensor=1
+	switch=1
 
 	i=0
-	while [ $i -lt ${#LIGHTS[@]} ]; do
+	while [ $i -lt ${#DOORS[@]} ]; do
 		n=$(($i + 1))
-
-		id="_${light}"
-		[ $light -eq 1 ] && id=""
-		old="light.${OLD}_light${id}"
-		new="light.${NEW}_light_${n}p"
-		[ -n "$OLD" ] || old="$new"
-		echo "  \"${old}\": [\"${new}\", \"${NAME} Light ${LIGHTS[$i]} (Primary)\"],"
-		light=$(($light + 1))
-
-		id="_${switch}"
-		[ $switch -eq 1 ] && id=""
-		old="switch.${OLD}_switch${id}"
-		new="switch.${NEW}_enable_${n}t"
-		[ -n "$OLD" ] || old="$new"
-		echo "  \"${old}\": [\"${new}\", \"${NAME} Enable ${LIGHTS[$i]} (Temporary)\"],"
-		switch=$(($switch + 1))
 
 		id="_${binary_sensor}"
 		[ $binary_sensor -eq 1 ] && id=""
 		old="binary_sensor.${OLD}_binaryinput${id}"
-		new="binary_sensor.${NEW}_switch_${n}"
+		new="binary_sensor.${NEW}_door_${n}"
 		[ -n "$OLD" ] || old="$new"
-		echo "  \"${old}\": [\"${new}\", \"${NAME} Switch ${LIGHTS[$i]}\"],"
+		echo "  \"${old}\": [\"${new}\", \"${NAME} Door ${DOORS[$i]}\"],"
 		binary_sensor=$(($binary_sensor + 1))
 
-		i=$n
-	done
-
-	i=0
-	while [ $i -lt ${#LIGHTS[@]} ]; do
-		n=$(($i + 1))
-
-		old="light.${OLD}_light_${light}"
-		new="light.${NEW}_light_${n}s"
+		id="_${switch}"
+		[ $switch -eq 1 ] && id=""
+		old="switch.${OLD}_switch${id}"
+		new="switch.${NEW}_alarm_${n}"
 		[ -n "$OLD" ] || old="$new"
-		echo "  \"${old}\": [\"${new}\", \"${NAME} Light ${LIGHTS[$i]} (Secondary)\"],"
-		light=$(($light + 1))
-
-		old="switch.${OLD}_switch_${switch}"
-		new="switch.${NEW}_enable_${n}p"
-		[ -n "$OLD" ] || old="$new"
-		echo "  \"${old}\": [\"${new}\", \"${NAME} Enable ${LIGHTS[$i]} (Persistent)\"],"
+		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]}\"],"
 		switch=$(($switch + 1))
 
 		i=$n
 	done
 
 	i=0
-	while [ $i -lt ${#LIGHTS[@]} ]; do
+	while [ $i -lt ${#DOORS[@]} ]; do
 		n=$(($i + 1))
 
-		old="light.${OLD}_light_${light}"
-		new="light.${NEW}_light_${n}t"
+		id="_${binary_sensor}"
+		[ $binary_sensor -eq 1 ] && id=""
+		old="binary_sensor.${OLD}_binaryinput${id}"
+		new="binary_sensor.${NEW}_alarm_${n}"
 		[ -n "$OLD" ] || old="$new"
-		echo "  \"${old}\": [\"${new}\", \"${NAME} Light ${LIGHTS[$i]} (Tertiary)\"],"
-		light=$(($light + 1))
+		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]}\"],"
+		binary_sensor=$(($binary_sensor + 1))
 
 		i=$n
 	done

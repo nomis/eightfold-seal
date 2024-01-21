@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16.0)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 set(EXTRA_COMPONENT_DIRS src)
-project(candle-dribbler)
+project(eightfold-seal)
 
 idf_build_get_property(build_dir BUILD_DIR)
 idf_build_get_property(elf_name EXECUTABLE_NAME GENERATOR_EXPRESSION)

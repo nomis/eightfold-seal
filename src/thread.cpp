@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "nutt/thread.h"
+#include "octavo/thread.h"
 
 #include <esp_err.h>
 #include <esp_log.h>
@@ -26,7 +26,7 @@
 
 #include <algorithm>
 
-namespace nutt {
+namespace octavo {
 
 WakeupThread::WakeupThread(const char *name) : name_(name),
 		semaphore_(xSemaphoreCreateBinary()) {
@@ -82,4 +82,4 @@ void WakeupThread::wake_up_timer(void *arg) {
 	}
 }
 
-} // namespace nutt
+} // namespace octavo

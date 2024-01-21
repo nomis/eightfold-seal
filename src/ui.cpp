@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "nutt/ui.h"
+#include "octavo/ui.h"
 
 #include <esp_err.h>
 #include <esp_heap_caps.h>
@@ -36,42 +36,44 @@
 #include <thread>
 #include <unordered_map>
 
-#include "nutt/debounce.h"
-#include "nutt/device.h"
-#include "nutt/log.h"
-#include "nutt/zigbee.h"
+#include "octavo/debounce.h"
+#include "octavo/device.h"
+#include "octavo/log.h"
+#include "octavo/zigbee.h"
 
-namespace nutt {
+namespace octavo {
 
 using namespace ui;
 using namespace ui::colour;
 
 const std::unordered_map<Event,LEDSequence> UserInterface::led_sequences_{
-	{ Event::IDLE,                                 {    0, { { OFF, 0 }                     } } },
-	{ Event::NETWORK_CONNECT,                      { 8000, { { GREEN, 5000 }, { OFF, 0 }    } } },
-	{ Event::NETWORK_CONNECTED,                    {    0, { { GREEN, 250 }, { OFF, 2750 }  } } },
+	{ Event::IDLE,                                 {    0, { { OFF, 0 }                      } } },
+	{ Event::NETWORK_CONNECT,                      { 8000, { { GREEN, 5000 }, { OFF, 0 }     } } },
+	{ Event::NETWORK_CONNECTED,                    {    0, { { GREEN, 250 }, { OFF, 2750 }   } } },
 	{ Event::CORE_DUMP_PRESENT,                    {    0, { { WHITE, 200 }, { RED, 200 },
 	                                                         { ORANGE, 200 }, { YELLOW, 200 },
 	                                                         { GREEN, 200 }, { CYAN, 200 },
 	                                                         { BLUE, 200 }, { MAGENTA, 200 }
-	                                                                                        } } },
-	{ Event::OTA_UPDATE_OK,                        {  500, { { CYAN, 0 }                    } } },
-	{ Event::LIGHT_SWITCHED_LOCAL,                 { 2000, { { ORANGE, 0 }                  } } },
-	{ Event::LIGHT_SWITCHED_REMOTE,                { 2000, { { BLUE, 0 }                    } } },
-	{ Event::IDENTIFY,                             { 3000, { { MAGENTA, 0 }                 } } },
-	{ Event::OTA_UPDATE_ERROR,                     { 3000, { { RED, 200 }, { OFF, 200 }     } } },
-	{ Event::NETWORK_UNCONFIGURED_DISCONNECTED,    {    0, { { WHITE, 0 }                   } } },
-	{ Event::NETWORK_UNCONFIGURED_CONNECTING,      {    0, { { WHITE, 250 }, { OFF, 250 }   } } },
-	{ Event::NETWORK_CONFIGURED_DISCONNECTED,      {    0, { { YELLOW, 0 }                  } } },
-	{ Event::NETWORK_CONFIGURED_CONNECTING,        {    0, { { YELLOW, 250 }, { OFF, 250 }  } } },
-	{ Event::NETWORK_ERROR,                        { 1000, { { RED, 250 }, { OFF, 250 }     } } },
-	{ Event::NETWORK_CONFIGURED_FAILED,            {    0, { { RED, 0 }                     } } },
-	{ Event::NETWORK_UNCONFIGURED_FAILED,          {    0, { { RED, 500 }, { OFF, 500 }     } } },
+	                                                                                         } } },
+	{ Event::OTA_UPDATE_OK,                        {  500, { { CYAN, 0 }                     } } },
+	{ Event::DOOR_OPENED,                          { 2000, { { ORANGE, 0 }                   } } },
+	{ Event::DOOR_CLOSED,                          { 2000, { { BLUE, 0 }                     } } },
+	{ Event::IDENTIFY,                             { 3000, { { MAGENTA, 0 }                  } } },
+	{ Event::OTA_UPDATE_ERROR,                     { 3000, { { RED, 200 }, { OFF, 200 }      } } },
+	{ Event::NETWORK_UNCONFIGURED_DISCONNECTED,    {    0, { { WHITE, 0 }                    } } },
+	{ Event::NETWORK_UNCONFIGURED_CONNECTING,      {    0, { { WHITE, 250 }, { OFF, 250 }    } } },
+	{ Event::NETWORK_CONFIGURED_DISCONNECTED,      {    0, { { YELLOW, 0 }                   } } },
+	{ Event::NETWORK_CONFIGURED_CONNECTING,        {    0, { { YELLOW, 250 }, { OFF, 250 }   } } },
+	{ Event::NETWORK_ERROR,                        { 1000, { { RED, 250 }, { OFF, 250 }      } } },
+	{ Event::NETWORK_CONFIGURED_FAILED,            {    0, { { RED, 0 }                      } } },
+	{ Event::NETWORK_UNCONFIGURED_FAILED,          {    0, { { RED, 500 }, { OFF, 500 }      } } },
+	{ Event::DOOR_ALARM1,                          {    0, { { ORANGE, 500 }, { OFF, 500 }   } } },
+	{ Event::DOOR_ALARM2,                          {    0, { { ORANGE, 250 }, { WHITE, 250 } } } },
 };
 
-} // namespace nutt
+} // namespace octavo
 
-namespace nutt {
+namespace octavo {
 
 namespace colour = ui::colour;
 using ui::Event;
@@ -410,11 +412,40 @@ void UserInterface::ota_update(bool ok) {
 	wake_up();
 }
 
-void UserInterface::light_switched(bool local) {
+void UserInterface::door_opened() {
 	std::lock_guard lock{mutex_};
 
-	restart_event(local ? Event::LIGHT_SWITCHED_LOCAL
-		: Event::LIGHT_SWITCHED_REMOTE);
+	restart_event(Event::DOOR_OPENED);
+	wake_up();
+}
+
+void UserInterface::door_closed() {
+	std::lock_guard lock{mutex_};
+
+	restart_event(Event::DOOR_CLOSED);
+	wake_up();
+}
+
+void UserInterface::alarm_level(uint8_t level) {
+	std::lock_guard lock{mutex_};
+
+	if (level != 1) {
+		stop_event(Event::DOOR_ALARM1);
+	}
+
+	if (level < 2) {
+		stop_event(Event::DOOR_ALARM2);
+	}
+
+	if (level >= 1) {
+		if (!event_active(Event::DOOR_ALARM1)) {
+			restart_event(Event::DOOR_ALARM1);
+		}
+	} else if (level >= 2) {
+		if (!event_active(Event::DOOR_ALARM2)) {
+			restart_event(Event::DOOR_ALARM2);
+		}
+	}
 	wake_up();
 }
 
@@ -428,4 +459,4 @@ void UserInterface::core_dump(bool present) {
 	wake_up();
 }
 
-} // namespace nutt
+} // namespace octavo

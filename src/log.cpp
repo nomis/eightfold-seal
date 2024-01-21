@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "nutt/log.h"
+#include "octavo/log.h"
 
 #include <esp_log.h>
 #include <nvs.h>
@@ -24,15 +24,15 @@
 
 #include <memory>
 
-#include "nutt/main.h"
-#include "nutt/device.h"
-#include "nutt/light.h"
-#include "nutt/ota.h"
-#include "nutt/thread.h"
-#include "nutt/ui.h"
-#include "nutt/zigbee.h"
+#include "octavo/main.h"
+#include "octavo/device.h"
+#include "octavo/door.h"
+#include "octavo/ota.h"
+#include "octavo/thread.h"
+#include "octavo/ui.h"
+#include "octavo/zigbee.h"
 
-namespace nutt {
+namespace octavo {
 
 std::unique_ptr<nvs::NVSHandle> Logging::nvs_;
 
@@ -64,14 +64,14 @@ void Logging::set_app_level(esp_log_level_t level) {
 }
 
 void Logging::configure_app(esp_log_level_t level) {
-	esp_log_level_set(nutt::TAG, level);
-	esp_log_level_set(nutt::CompressedOTA::TAG, level);
-	esp_log_level_set(nutt::Device::TAG, level);
-	esp_log_level_set(nutt::Light::TAG, level);
-	esp_log_level_set(nutt::UserInterface::TAG, level);
-	esp_log_level_set(nutt::ZigbeeDevice::TAG, level);
-	esp_log_level_set(nutt::ZigbeeCluster::TAG, level);
-	esp_log_level_set(nutt::WakeupThread::TAG, level);
+	esp_log_level_set(octavo::TAG, level);
+	esp_log_level_set(octavo::CompressedOTA::TAG, level);
+	esp_log_level_set(octavo::Device::TAG, level);
+	esp_log_level_set(octavo::Door::TAG, level);
+	esp_log_level_set(octavo::UserInterface::TAG, level);
+	esp_log_level_set(octavo::ZigbeeDevice::TAG, level);
+	esp_log_level_set(octavo::ZigbeeCluster::TAG, level);
+	esp_log_level_set(octavo::WakeupThread::TAG, level);
 }
 
 void Logging::set_sys_level(esp_log_level_t level) {
@@ -134,4 +134,4 @@ void Logging::sys_level_nvs(esp_log_level_t level) {
 	}
 }
 
-} // namespace nutt
+} // namespace octavo

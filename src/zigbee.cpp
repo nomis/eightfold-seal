@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "nutt/zigbee.h"
+#include "octavo/zigbee.h"
 
 #include <esp_err.h>
 #include <esp_log.h>
@@ -36,17 +36,17 @@ extern "C" {
 #include <utility>
 #include <vector>
 
-#include "nutt/ota.h"
-#include "nutt/thread.h"
+#include "octavo/ota.h"
+#include "octavo/thread.h"
 
 extern "C" void esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct) {
-	nutt::ZigbeeDevice::instance_->signal_handler(
+	octavo::ZigbeeDevice::instance_->signal_handler(
 		static_cast<esp_zb_app_signal_type_t>(*signal_struct->p_app_signal),
 		signal_struct->esp_err_status,
 		esp_zb_app_signal_get_params(signal_struct->p_app_signal));
 }
 
-namespace nutt {
+namespace octavo {
 
 ZigbeeDevice *ZigbeeDevice::instance_{nullptr};
 
@@ -865,9 +865,9 @@ void ZigbeeCluster::update_attr_value(uint16_t attr_id, void *value) {
 	esp_zb_zcl_set_attribute_val(ep_->id(), id_, role_, attr_id, value, false);
 }
 
-} // namespace nutt
+} // namespace octavo
 
-using namespace nutt;
+using namespace octavo;
 
 /*
  * Workaround for zb_zcl_send_report_attr_command() being called with

@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
 
 #include <memory>
 
-namespace nutt {
+namespace octavo {
 
 class CompressedOTA {
 public:
-	static constexpr const char *TAG = "nutt.OTA";
+	static constexpr const char *TAG = "octavo.OTA";
 
 	CompressedOTA() = default;
 	~CompressedOTA();
@@ -45,4 +45,4 @@ private:
 	esp_ota_handle_t handle_{0};
 };
 
-} // namespace nutt
+} // namespace octavo

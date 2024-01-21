@@ -9,9 +9,9 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "nutt/base64.h"
+#include "octavo/base64.h"
 
-namespace nutt {
+namespace octavo {
 
 static const char base64_table[65] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -196,4 +196,4 @@ unsigned char * base64_url_decode(const char *src, size_t len, size_t *out_len)
 	return base64_gen_decode(src, len, out_len, base64_url_table);
 }
 
-} // namespace nutt
+} // namespace octavo

@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,10 +29,10 @@
 #include "thread.h"
 #include "zigbee.h"
 
-namespace nutt {
+namespace octavo {
 
 class Device;
-class Light;
+class Door;
 class UserInterface;
 
 namespace device {
@@ -47,7 +47,7 @@ public:
 	void reload_app_info();
 
 private:
-	static constexpr const char *TAG = "nutt.Device";
+	static constexpr const char *TAG = "octavo.Device";
 	static uint8_t power_source_;
 	static uint8_t device_class_;
 	static uint8_t device_type_;
@@ -79,19 +79,19 @@ public:
 	void configure_cluster_list(esp_zb_cluster_list_t &cluster_list) override;
 
 private:
-#ifndef CONFIG_NUTT_SUPPORT_OTA
-#define CONFIG_NUTT_SUPPORT_OTA 0
+#ifndef CONFIG_OCTAVO_SUPPORT_OTA
+#define CONFIG_OCTAVO_SUPPORT_OTA 0
 #endif
-#if CONFIG_NUTT_SUPPORT_OTA
-	static constexpr const uint16_t OTA_MANUFACTURER_ID = CONFIG_NUTT_OTA_MANUFACTURER_ID;
-	static constexpr const uint16_t OTA_IMAGE_TYPE_ID = CONFIG_NUTT_OTA_IMAGE_TYPE_ID;
-# ifndef CONFIG_NUTT_OTA_FILE_VERSION_FROM_GIT_COMMIT
-# define CONFIG_NUTT_OTA_FILE_VERSION_FROM_GIT_COMMIT 0
+#if CONFIG_OCTAVO_SUPPORT_OTA
+	static constexpr const uint16_t OTA_MANUFACTURER_ID = CONFIG_OCTAVO_OTA_MANUFACTURER_ID;
+	static constexpr const uint16_t OTA_IMAGE_TYPE_ID = CONFIG_OCTAVO_OTA_IMAGE_TYPE_ID;
+# ifndef CONFIG_OCTAVO_OTA_FILE_VERSION_FROM_GIT_COMMIT
+# define CONFIG_OCTAVO_OTA_FILE_VERSION_FROM_GIT_COMMIT 0
 # endif
-# if CONFIG_NUTT_OTA_FILE_VERSION_FROM_GIT_COMMIT
-	static constexpr const uint32_t OTA_FILE_VERSION = static_cast<uint32_t>(NUTT_COMMIT_TIME);
+# if CONFIG_OCTAVO_OTA_FILE_VERSION_FROM_GIT_COMMIT
+	static constexpr const uint32_t OTA_FILE_VERSION = static_cast<uint32_t>(OCTAVO_COMMIT_TIME);
 # else
-	static constexpr const uint32_t OTA_FILE_VERSION = CONFIG_NUTT_OTA_FILE_VERSION;
+	static constexpr const uint32_t OTA_FILE_VERSION = CONFIG_OCTAVO_OTA_FILE_VERSION;
 # endif
 #else
 	static constexpr const uint16_t OTA_MANUFACTURER_ID = 0;
@@ -174,7 +174,7 @@ public:
 	void reload_app_info(bool full);
 
 private:
-	static constexpr const char *TAG = "nutt.Device";
+	static constexpr const char *TAG = "octavo.Device";
 
 	Device &device_;
 	size_t index_;
@@ -188,15 +188,15 @@ public:
 	~Device() = delete;
 
 	// cppcheck-suppress duplInheritedMember
-	static constexpr const char *TAG = "nutt.Device";
+	static constexpr const char *TAG = "octavo.Device";
 	/* Assumes 2 OTA partitions are configured */
 	static constexpr const size_t NUM_EP_PER_DEVICE = 5;
 	static constexpr const size_t MAX_DATE_CODE_LENGTH = 16;
 	static constexpr const size_t MAX_STRING_LENGTH = 70;
 
-	void add(Light &light, std::vector<std::reference_wrapper<ZigbeeEndpoint>> &&endpoints);
+	void add(Door &door, std::vector<std::reference_wrapper<ZigbeeEndpoint>> &&endpoints);
 	void start();
-	void request_refresh(Light &light);
+	void request_refresh(Door &door);
 
 	inline UserInterface& ui() { return ui_; };
 	void join_network();
@@ -221,17 +221,17 @@ private:
 	static constexpr const ep_id_t CONNECTED_EP_ID = 210;
 	static constexpr const ep_id_t UPLINK_PARENT_EP_ID = 211;
 	static constexpr const ep_id_t UPLINK_RSSI_EP_ID = 212;
-#ifndef CONFIG_NUTT_SUPPORT_OTA
-#define CONFIG_NUTT_SUPPORT_OTA 0
+#ifndef CONFIG_OCTAVO_SUPPORT_OTA
+#define CONFIG_OCTAVO_SUPPORT_OTA 0
 #endif
-	static constexpr const bool OTA_SUPPORTED = CONFIG_NUTT_SUPPORT_OTA;
+	static constexpr const bool OTA_SUPPORTED = CONFIG_OCTAVO_SUPPORT_OTA;
 
 	static void scheduled_refresh(uint8_t param);
 	static void scheduled_uptime(uint8_t param);
 	static void scheduled_connected(uint8_t param);
 
 	void reload_app_info(bool full);
-	void do_refresh(uint8_t light);
+	void do_refresh(uint8_t door);
 	unsigned long run_tasks() override;
 
 	static Device *instance_;
@@ -249,9 +249,9 @@ private:
 	device::UplinkCluster uplink_cl_;
 	device::RSSICluster rssi_cl_;
 	std::vector<std::reference_wrapper<device::SoftwareCluster>> software_cls_;
-	std::unordered_map<uint8_t,Light&> lights_;
+	std::unordered_map<uint8_t,Door&> doors_;
 	bool ota_validated_{false};
 	std::atomic<bool> core_dump_present_{false};
 };
 
-} // namespace nutt
+} // namespace octavo

@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-namespace nutt {
+namespace octavo {
 
 using ep_id_t = uint8_t;
 
@@ -79,7 +79,7 @@ protected:
 	~ZigbeeCluster() = default;
 
 public:
-	static constexpr const char *TAG = "nutt.ZigbeeCluster";
+	static constexpr const char *TAG = "octavo.ZigbeeCluster";
 
 	inline uint16_t id() const { return id_; }
 	inline esp_zb_zcl_cluster_role_t role() const { return role_; }
@@ -180,15 +180,15 @@ class ZigbeeDevice {
 	friend void ::esp_zb_app_signal_handler(esp_zb_app_signal_t *signal_struct);
 
 public:
-#ifndef CONFIG_NUTT_ZIGBEE_ROLE_ROUTER
-#define CONFIG_NUTT_ZIGBEE_ROLE_ROUTER 0
+#ifndef CONFIG_OCTAVO_ZIGBEE_ROLE_ROUTER
+#define CONFIG_OCTAVO_ZIGBEE_ROLE_ROUTER 0
 #endif
-	static constexpr const bool ROUTER = CONFIG_NUTT_ZIGBEE_ROLE_ROUTER;
+	static constexpr const bool ROUTER = CONFIG_OCTAVO_ZIGBEE_ROLE_ROUTER;
 
 	explicit ZigbeeDevice(ZigbeeListener &listener);
 	~ZigbeeDevice() = delete;
 
-	static constexpr const char *TAG = "nutt.ZigbeeDevice";
+	static constexpr const char *TAG = "octavo.ZigbeeDevice";
 
 	void add(ZigbeeEndpoint &endpoint);
 	void start();
@@ -262,4 +262,4 @@ public:
 	virtual void zigbee_neighbours_updated(const std::shared_ptr<const std::vector<ZigbeeNeighbour>> &neighbours) {};
 };
 
-} // namespace nutt
+} // namespace octavo

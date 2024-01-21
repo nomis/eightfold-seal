@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "nutt/device.h"
+#include "octavo/device.h"
 
 #include <esp_app_desc.h>
 #include <esp_chip_info.h>
@@ -36,26 +36,26 @@
 #include <unordered_map>
 #include <vector>
 
-#include "nutt/base64.h"
-#include "nutt/main.h"
-#include "nutt/light.h"
-#include "nutt/thread.h"
-#include "nutt/ui.h"
-#include "nutt/util.h"
-#include "nutt/zigbee.h"
+#include "octavo/base64.h"
+#include "octavo/door.h"
+#include "octavo/main.h"
+#include "octavo/thread.h"
+#include "octavo/ui.h"
+#include "octavo/util.h"
+#include "octavo/zigbee.h"
 
 using namespace std::chrono_literals;
 
-namespace nutt {
+namespace octavo {
 
 Device *Device::instance_{nullptr};
 
 Device::Device(UserInterface &ui) : WakeupThread("Device"), ui_(ui),
 		zigbee_(*new ZigbeeDevice{*this}),
 		basic_cl_(*this, "uuid.uk",
-			(MAX_LIGHTS > 0 || !ZigbeeDevice::ROUTER)
-				? "candle-dribbler" : "router",
-			"https://github.com/nomis/candle-dribbler"),
+			(MAX_DOORS > 0 || !ZigbeeDevice::ROUTER)
+				? "eightfold-seal" : "router",
+			"https://github.com/nomis/eightfold-seal"),
 		identify_cl_(ui_) {
 	assert(!instance_);
 	instance_ = this;
@@ -73,7 +73,7 @@ Device::Device(UserInterface &ui) : WakeupThread("Device"), ui_(ui),
 	}
 
 	auto &main_ep = *new ZigbeeEndpoint{MAIN_EP_ID, ESP_ZB_AF_HA_PROFILE_ID,
-		ESP_ZB_HA_ON_OFF_LIGHT_DEVICE_ID, {basic_cl_, identify_cl_, uptime_cl_}};
+		ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, {basic_cl_, identify_cl_, uptime_cl_}};
 
 	if (OTA_SUPPORTED) {
 		ESP_LOGD(TAG, "OTA supported");
@@ -98,25 +98,25 @@ Device::Device(UserInterface &ui) : WakeupThread("Device"), ui_(ui),
 		software_cls_.emplace_back(software_cl);
 		zigbee_.add(*new ZigbeeEndpoint{
 			static_cast<ep_id_t>(SOFTWARE_BASE_EP_ID + i),
-			ESP_ZB_AF_HA_PROFILE_ID, ESP_ZB_HA_ON_OFF_LIGHT_DEVICE_ID,
+			ESP_ZB_AF_HA_PROFILE_ID, ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID,
 			software_cl});
 	}
 
 	zigbee_.add(*new ZigbeeEndpoint{CONNECTED_EP_ID, ESP_ZB_AF_HA_PROFILE_ID,
-			ESP_ZB_HA_ON_OFF_LIGHT_DEVICE_ID, {connected_cl_}});
+			ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, {connected_cl_}});
 
 	zigbee_.add(*new ZigbeeEndpoint{UPLINK_PARENT_EP_ID, ESP_ZB_AF_HA_PROFILE_ID,
-			ESP_ZB_HA_ON_OFF_LIGHT_DEVICE_ID, {uplink_cl_}});
+			ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, {uplink_cl_}});
 
 	zigbee_.add(*new ZigbeeEndpoint{UPLINK_RSSI_EP_ID, ESP_ZB_AF_HA_PROFILE_ID,
-			ESP_ZB_HA_ON_OFF_LIGHT_DEVICE_ID, {rssi_cl_}});
+			ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID, {rssi_cl_}});
 
 	core_dump_present_ = esp_core_dump_image_check() == ESP_OK;
 	ui_.core_dump(core_dump_present_);
 }
 
-void Device::add(Light &light, std::vector<std::reference_wrapper<ZigbeeEndpoint>> &&endpoints) {
-	lights_.emplace(light.index(), light);
+void Device::add(Door &door, std::vector<std::reference_wrapper<ZigbeeEndpoint>> &&endpoints) {
+	doors_.emplace(door.index(), door);
 
 	for (auto ep : endpoints)
 		zigbee_.add(ep);
@@ -132,13 +132,13 @@ void Device::start() {
 	t.detach();
 }
 
-void Device::request_refresh(Light &light) {
-	esp_zb_scheduler_alarm(&Device::scheduled_refresh, light.index(), 1);
+void Device::request_refresh(Door &door) {
+	esp_zb_scheduler_alarm(&Device::scheduled_refresh, door.index(), 1);
 }
 
-void Device::do_refresh(uint8_t light) {
-	ESP_LOGD(TAG, "Refresh light %u", light);
-	lights_.at(light).refresh();
+void Device::do_refresh(uint8_t door) {
+	ESP_LOGD(TAG, "Refresh door %u", door);
+	doors_.at(door).refresh();
 }
 
 void Device::scheduled_refresh(uint8_t param) {
@@ -304,8 +304,8 @@ void Device::scheduled_connected(uint8_t param) {
 unsigned long Device::run_tasks() {
 	unsigned long wait_ms = ULONG_MAX;
 
-	for (auto &light : lights_)
-		wait_ms = std::min(wait_ms, light.second.run());
+	for (auto &door : doors_)
+		wait_ms = std::min(wait_ms, door.second.run());
 
 	return wait_ms;
 }
@@ -493,7 +493,7 @@ void Device::zigbee_neighbours_updated(const std::shared_ptr<const std::vector<Z
 namespace device {
 
 uint8_t BasicCluster::power_source_{0x04}; /* DC */
-uint8_t BasicCluster::device_class_{0x00}; /* Lighting */
+uint8_t BasicCluster::device_class_{0x00}; /* Dooring */
 uint8_t BasicCluster::device_type_{0xf0}; /* Generic actuator */
 
 BasicCluster::BasicCluster(Device &device,
@@ -860,4 +860,4 @@ void SoftwareCluster::reload_app_info(bool full) {
 
 } // namespace device
 
-} // namespace nutt
+} // namespace octavo

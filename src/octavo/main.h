@@ -1,6 +1,6 @@
 /*
- * candle-dribbler - ESP32 Zigbee light controller
- * Copyright 2023  Simon Arlott
+ * eightfold-seal - ESP32 Zigbee door alarm
+ * Copyright 2024  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,19 +21,20 @@
 #include <cstddef>
 #include <sdkconfig.h>
 
-namespace nutt {
 
-static constexpr const char *TAG = "nutt";
-static constexpr const size_t MAX_LIGHTS = CONFIG_NUTT_MAX_LIGHTS;
+namespace octavo {
 
-#ifndef CONFIG_NUTT_SWITCH_ACTIVE_LOW
-#define CONFIG_NUTT_SWITCH_ACTIVE_LOW 0
+static constexpr const char *TAG = "octavo";
+static constexpr const size_t MAX_DOORS = CONFIG_OCTAVO_MAX_DOORS;
+
+#ifndef CONFIG_OCTAVO_SWITCH_ACTIVE_LOW
+#define CONFIG_OCTAVO_SWITCH_ACTIVE_LOW 0
 #endif
-static constexpr const bool SWITCH_ACTIVE_LOW = CONFIG_NUTT_SWITCH_ACTIVE_LOW;
+static constexpr const bool SWITCH_ACTIVE_LOW = CONFIG_OCTAVO_SWITCH_ACTIVE_LOW;
 
-#ifndef CONFIG_NUTT_RELAY_ACTIVE_LOW
-#define CONFIG_NUTT_RELAY_ACTIVE_LOW 0
+#ifndef CONFIG_OCTAVO_BUZZER_ACTIVE_LOW
+#define CONFIG_OCTAVO_BUZZER_ACTIVE_LOW 0
 #endif
-static constexpr const bool RELAY_ACTIVE_LOW = CONFIG_NUTT_RELAY_ACTIVE_LOW;
+static constexpr const bool BUZZER_ACTIVE_LOW = CONFIG_OCTAVO_BUZZER_ACTIVE_LOW;
 
-} // namespace nutt
+} // namespace octavo
