@@ -39,10 +39,13 @@ Each door has a switch GPIO and presents the following Zigbee on/off clusters:
 * Door Status (Binary Input)
 * Alarm Status (Binary Input)
 * Alarm Enable Switch
+* Alarm Time 1 (Analog Output)
+* Alarm Time 2 (Analog Output)
 
 The buzzer GPIO will be activated when either door is left open for longer than
-the configured alarm times. Level 1 is a warning beep progressing to level 2
-which is continuous.
+the configured alarm times. At the level 1 time a warning beep will sound,
+increasing in frequency until the level 2 time is reached when it will be
+continuously active.
 
 Status
 ~~~~~~
@@ -188,6 +191,21 @@ The control cluster endpoints are in the following order:
    * - Type
      - Endpoint
      - Name
+   * - Number
+     - 41
+     - Alarm 1 Time 1
+   * - Number
+     - 51
+     - Alarm 1 Time 2
+   * - ⋮
+     - ⋮
+     - ⋮
+   * - Number
+     - 4n
+     - Alarm N Time 1
+   * - Number
+     - 5n
+     - Alarm N Time 2
    * - Switch
      - 31
      - Alarm Enable 1

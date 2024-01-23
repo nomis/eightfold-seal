@@ -24,6 +24,9 @@
 #include <nvs_handle.hpp>
 #include <driver/gpio.h>
 
+#include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -106,10 +109,71 @@ protected:
 	void updated_value(bool value) override;
 };
 
+class AnalogCluster: public ZigbeeCluster {
+protected:
+	AnalogCluster(Door &door, const char *name, uint16_t cluster_id,
+		uint16_t attr_id, const char *label_prefix, const char *label_suffix,
+		uint32_t app_type, uint16_t eng_units, float min_value,
+		float max_value);
+	~AnalogCluster() = default;
+
+public:
+	void refresh();
+	esp_err_t set_attr_value(uint16_t attr_id,
+		const esp_zb_zcl_attribute_data_t *value) override;
+
+protected:
+	static constexpr const char *TAG = "octavo.Door";
+
+	void configure_analog_output_cluster_list(esp_zb_cluster_list_t &cluster_list);
+	virtual float refresh_value() = 0;
+	virtual void updated_value(float value) = 0;
+
+	Door &door_;
+
+private:
+	const char *name_;
+	const char *label_prefix_{"Unknown"};
+	const char *label_suffix_{"Unknown"};
+	const uint16_t attr_id_;
+	uint32_t app_type_{0};
+	uint16_t eng_units_{0};
+	float min_value_{NAN};
+	float max_value_{NAN};
+	float state_;
+};
+
+class AlarmTime1Cluster: public AnalogCluster {
+public:
+	explicit AlarmTime1Cluster(Door &door);
+	~AlarmTime1Cluster() = delete;
+
+	void configure_cluster_list(esp_zb_cluster_list_t &cluster_list) override;
+
+protected:
+	float refresh_value() override;
+	void updated_value(float value) override;
+};
+
+class AlarmTime2Cluster: public AnalogCluster {
+public:
+	explicit AlarmTime2Cluster(Door &door);
+	~AlarmTime2Cluster() = delete;
+
+	void configure_cluster_list(esp_zb_cluster_list_t &cluster_list) override;
+
+protected:
+	float refresh_value() override;
+	void updated_value(float value) override;
+};
+
 } // namespace door
 
 class Door {
 public:
+	static constexpr const std::chrono::seconds MIN_ALARM_TIME_S{1};
+	static constexpr const std::chrono::seconds MAX_ALARM_TIME_S{300};
+
 	Door(uint8_t index, gpio_num_t switch_pin, bool switch_active_low);
 	~Door() = delete;
 
@@ -124,9 +188,15 @@ public:
 
 	bool open() const;
 	uint8_t alarm_level() const;
-	bool alarm_enable() const;
 
+	bool alarm_enable() const;
 	void alarm_enable(bool state);
+
+	uint64_t alarm_time1_us() const;
+	void alarm_time1_us(uint64_t value);
+
+	uint64_t alarm_time2_us() const;
+	void alarm_time2_us(uint64_t value);
 
 	void request_refresh();
 	void refresh();
@@ -137,12 +207,23 @@ private:
 	static constexpr const ep_id_t ALARM_ENABLE_BASE_EP_ID = 30;
 	static constexpr const ep_id_t ALARM_TIME1_BASE_EP_ID = 40;
 	static constexpr const ep_id_t ALARM_TIME2_BASE_EP_ID = 50;
-	static constexpr const unsigned long DEBOUNCE_US = 20 * 1000;
+	static constexpr const unsigned long DEBOUNCE_US = std::chrono::microseconds{std::chrono::milliseconds{20}}.count();
+	static constexpr const std::chrono::microseconds MIN_ALARM_TIME_US{MIN_ALARM_TIME_S};
+	static constexpr const std::chrono::microseconds MAX_ALARM_TIME_US{MAX_ALARM_TIME_S};
 	static std::unique_ptr<nvs::NVSHandle> nvs_;
+
+	static inline uint64_t constrain_alarm_time_us(uint64_t value) {
+		return std::max(static_cast<uint64_t>(MIN_ALARM_TIME_US.count()),
+			std::min(static_cast<uint64_t>(MAX_ALARM_TIME_US.count()), value));
+	}
 
 	bool open_nvs();
 	bool enable_nvs();
 	void enable_nvs(bool state);
+	uint64_t alarm_time1_us_nvs();
+	void alarm_time1_us_nvs(uint64_t value);
+	uint64_t alarm_time2_us_nvs();
+	void alarm_time2_us_nvs(uint64_t value);
 
 	void open(bool state);
 
@@ -156,10 +237,14 @@ private:
 	uint64_t switch_change_us_{0};
 	uint8_t alarm_level_{0};
 	bool alarm_enable_{true};
+	uint64_t alarm_time1_us_{std::chrono::microseconds(std::chrono::seconds(CONFIG_OCTAVO_DEFAULT_ALARM_TIME1_S)).count()};
+	uint64_t alarm_time2_us_{std::chrono::microseconds(std::chrono::seconds(CONFIG_OCTAVO_DEFAULT_ALARM_TIME2_S)).count()};
 
 	door::DoorStatusCluster &door_status_cl_;
 	door::AlarmStatusCluster &alarm_status_cl_;
 	door::AlarmEnableCluster &alarm_enable_cl_;
+	door::AlarmTime1Cluster &alarm_time1_cl_;
+	door::AlarmTime2Cluster &alarm_time2_cl_;
 
 	Device *device_{nullptr};
 };

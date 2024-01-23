@@ -17,6 +17,7 @@ function generate_file() {
 
 	binary_sensor=1
 	switch=1
+	number=1
 
 	i=0
 	while [ $i -lt ${#DOORS[@]} ]; do
@@ -37,6 +38,17 @@ function generate_file() {
 		[ -n "$OLD" ] || old="$new"
 		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]}\"],"
 		switch=$(($switch + 1))
+
+		id="_${number}"
+		old="number.${OLD}_number_alarm${id}_time_1"
+		new="number.${NEW}_alarm_${n}_time_1"
+		[ -n "$OLD" ] || old="$new"
+		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]} Time 1\"],"
+		old="number.${OLD}_number_alarm${id}_time_2"
+		new="number.${NEW}_alarm_${n}_time_2"
+		[ -n "$OLD" ] || old="$new"
+		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]} Time 2\"],"
+		number=$(($number + 1))
 
 		i=$n
 	done
