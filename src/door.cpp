@@ -412,12 +412,12 @@ void AlarmEnableCluster::updated_value(bool state) {
 AnalogCluster::AnalogCluster(Door &door, const char *name,
 		uint16_t cluster_id, uint16_t attr_id, const char *label_prefix,
 		const char *label_suffix, uint32_t app_type, uint16_t eng_units,
-		float min_value, float max_value) : ZigbeeCluster(cluster_id,
-			ESP_ZB_ZCL_CLUSTER_SERVER_ROLE, {attr_id}), door_(door),
-			name_(name), label_prefix_(label_prefix),
+		float min_value, float max_value, float resolution)
+			: ZigbeeCluster(cluster_id, ESP_ZB_ZCL_CLUSTER_SERVER_ROLE,
+			{attr_id}), door_(door), name_(name), label_prefix_(label_prefix),
 			label_suffix_(label_suffix), attr_id_(attr_id), app_type_(app_type),
 			eng_units_(eng_units), min_value_(min_value),
-			max_value_(max_value) {
+			max_value_(max_value), resolution_(resolution) {
 }
 
 void AnalogCluster::configure_analog_output_cluster_list(esp_zb_cluster_list_t &cluster_list) {
@@ -433,6 +433,9 @@ void AnalogCluster::configure_analog_output_cluster_list(esp_zb_cluster_list_t &
 
 	ESP_ERROR_CHECK(esp_zb_analog_output_cluster_add_attr(output_cluster,
 			ESP_ZB_ZCL_ATTR_ANALOG_OUTPUT_MAX_PRESENT_VALUE_ID, &max_value_));
+
+	ESP_ERROR_CHECK(esp_zb_analog_output_cluster_add_attr(output_cluster,
+			ESP_ZB_ZCL_ATTR_ANALOG_OUTPUT_RESOLUTION_ID, &resolution_));
 
 	ESP_ERROR_CHECK(esp_zb_analog_output_cluster_add_attr(output_cluster,
 			ESP_ZB_ZCL_ATTR_ANALOG_OUTPUT_APPLICATION_TYPE_ID, &app_type_));
@@ -482,7 +485,7 @@ AlarmTime1Cluster::AlarmTime1Cluster(Door &door)
 			| (  0x0E << 16)  /* Type:  Time in Seconds */
 			|  0x0000         /* Index: Relative time   */,
 			       73         /* Time - Days */,
-			Door::MIN_ALARM_TIME_S.count(), Door::MAX_ALARM_TIME_S.count()) {
+			Door::MIN_ALARM_TIME_S.count(), Door::MAX_ALARM_TIME_S.count(), 1) {
 }
 
 void AlarmTime1Cluster::configure_cluster_list(esp_zb_cluster_list_t &cluster_list) {
@@ -506,7 +509,7 @@ AlarmTime2Cluster::AlarmTime2Cluster(Door &door)
 			| (  0x0E << 16)  /* Type:  Time in Seconds */
 			|  0x0000         /* Index: Relative time   */,
 			       73         /* Time - Days */,
-			Door::MIN_ALARM_TIME_S.count(), Door::MAX_ALARM_TIME_S.count()) {
+			Door::MIN_ALARM_TIME_S.count(), Door::MAX_ALARM_TIME_S.count(), 1) {
 }
 
 void AlarmTime2Cluster::configure_cluster_list(esp_zb_cluster_list_t &cluster_list) {

@@ -114,7 +114,7 @@ protected:
 	AnalogCluster(Door &door, const char *name, uint16_t cluster_id,
 		uint16_t attr_id, const char *label_prefix, const char *label_suffix,
 		uint32_t app_type, uint16_t eng_units, float min_value,
-		float max_value);
+		float max_value, float resolution);
 	~AnalogCluster() = default;
 
 public:
@@ -140,6 +140,7 @@ private:
 	uint16_t eng_units_{0};
 	float min_value_{NAN};
 	float max_value_{NAN};
+	float resolution_{NAN};
 	float state_;
 };
 
