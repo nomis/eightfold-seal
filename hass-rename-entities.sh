@@ -34,9 +34,9 @@ function generate_file() {
 		id="_${switch}"
 		[ $switch -eq 1 ] && id=""
 		old="switch.${OLD}_switch${id}"
-		new="switch.${NEW}_alarm_${n}"
+		new="switch.${NEW}_alarm_enable_${n}"
 		[ -n "$OLD" ] || old="$new"
-		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]}\"],"
+		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]} Enable\"],"
 		switch=$(($switch + 1))
 
 		id="_${number}"
@@ -64,6 +64,14 @@ function generate_file() {
 		[ -n "$OLD" ] || old="$new"
 		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]}\"],"
 		binary_sensor=$(($binary_sensor + 1))
+
+		id="_${switch}"
+		[ $switch -eq 1 ] && id=""
+		old="switch.${OLD}_switch${id}"
+		new="switch.${NEW}_alarm_cancel_${n}"
+		[ -n "$OLD" ] || old="$new"
+		echo "  \"${old}\": [\"${new}\", \"${NAME} Alarm ${DOORS[$i]} Cancel\"],"
+		switch=$(($switch + 1))
 
 		i=$n
 	done

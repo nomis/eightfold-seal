@@ -55,6 +55,7 @@ Door::Door(uint8_t index, gpio_num_t switch_pin, bool switch_active_low)
 		door_status_cl_(*new door::DoorStatusCluster{*this}),
 		alarm_status_cl_(*new door::AlarmStatusCluster{*this}),
 		alarm_enable_cl_(*new door::AlarmEnableCluster{*this}),
+		alarm_cancel_cl_(*new door::AlarmCancelCluster{*this}),
 		alarm_time1_cl_(*new door::AlarmTime1Cluster{*this}),
 		alarm_time2_cl_(*new door::AlarmTime2Cluster{*this}) {
 	ESP_LOGD(TAG, "Door %u switch is %d", index_, switch_active_);
@@ -160,6 +161,12 @@ void Door::attach(Device &device) {
 			{
 				alarm_time2_cl_,
 			}},
+		*new ZigbeeEndpoint{
+			static_cast<ep_id_t>(ALARM_CANCEL_BASE_EP_ID + index_),
+			ESP_ZB_AF_HA_PROFILE_ID, ESP_ZB_HA_SIMPLE_SENSOR_DEVICE_ID,
+			{
+				alarm_cancel_cl_,
+			}},
 	});
 
 	switch_debounce_.start(device);
@@ -175,6 +182,9 @@ unsigned long Door::run() {
 
 			switch_active_ = state;
 			switch_change_us_ = esp_timer_get_time();
+			if (!state) {
+				alarm_cancel_ = false;
+			}
 			request_refresh();
 		} else {
 			open(switch_debounce_.value());
@@ -205,7 +215,14 @@ void Door::open(bool state) {
 		switch_change_us_ = now_us;
 	}
 
+	if (alarm_cancel_ && !state) {
+		ESP_LOGD(TAG, "Door %u alarm cancel %d -> %d (door closed)",
+			index_, alarm_cancel_, false);
+		alarm_cancel_ = false;
+	}
+
 	update_state();
+
 	if (state) {
 		device_->ui().door_opened();
 	} else {
@@ -230,6 +247,26 @@ void Door::alarm_enable(bool state) {
 		index_, alarm_enable_, state);
 	enable_nvs(state);
 	alarm_enable_ = state;
+	update_state();
+}
+
+bool Door::alarm_cancel() const {
+	std::lock_guard lock{mutex_};
+	return alarm_cancel_;
+}
+
+void Door::alarm_cancel(bool state) {
+	std::lock_guard lock{mutex_};
+
+	ESP_LOGD(TAG, "Door %u set alarm cancel %d -> %d",
+		index_, alarm_cancel_, state);
+	alarm_cancel_ = state;
+
+	if (alarm_cancel_ && !switch_active_) {
+		ESP_LOGD(TAG, "Door %u alarm cancel %d -> %d (door not open)",
+			index_, alarm_cancel_, false);
+		alarm_cancel_ = false;
+	}
 	update_state();
 }
 
@@ -281,6 +318,7 @@ void Door::refresh() {
 	alarm_status_cl_.refresh();
 	alarm_time1_cl_.refresh();
 	alarm_time2_cl_.refresh();
+	alarm_cancel_cl_.refresh();
 }
 
 namespace door {
@@ -407,6 +445,23 @@ bool AlarmEnableCluster::refresh_value() {
 
 void AlarmEnableCluster::updated_value(bool state) {
 	door_.alarm_enable(state);
+}
+
+AlarmCancelCluster::AlarmCancelCluster(Door &door)
+		: BooleanCluster(door, "alarm cancel",
+			ESP_ZB_ZCL_CLUSTER_ID_ON_OFF, ESP_ZB_ZCL_ATTR_ON_OFF_ON_OFF_ID) {
+}
+
+void AlarmCancelCluster::configure_cluster_list(esp_zb_cluster_list_t &cluster_list) {
+	configure_switch_cluster_list(cluster_list);
+}
+
+bool AlarmCancelCluster::refresh_value() {
+	return door_.alarm_cancel();
+}
+
+void AlarmCancelCluster::updated_value(bool state) {
+	door_.alarm_cancel(state);
 }
 
 AnalogCluster::AnalogCluster(Door &door, const char *name,

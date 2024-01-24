@@ -41,11 +41,15 @@ Each door has a switch GPIO and presents the following Zigbee on/off clusters:
 * Alarm Enable Switch
 * Alarm Time 1 (Analog Output)
 * Alarm Time 2 (Analog Output)
+* Alarm Cancel Switch
 
 The buzzer GPIO will be activated when either door is left open for longer than
-the configured alarm times. At the level 1 time a warning beep will sound,
-increasing in frequency until the level 2 time is reached when it will be
+the configured alarm times. After **Alarm Time 1** a warning beep will sound,
+increasing in frequency until the **Alarm Time 2** expires when it will be
 continuously active.
+
+The **Alarm Cancel Switch** is used to dismiss the alarm until the door is
+closed without needing to disable the alarm completely.
 
 Status
 ~~~~~~
@@ -215,6 +219,15 @@ The control cluster endpoints are in the following order:
    * - Switch
      - 3n
      - Alarm Enable N
+   * - Switch
+     - 61
+     - Alarm Cancel 1
+   * - ⋮
+     - ⋮
+     - ⋮
+   * - Switch
+     - 6n
+     - Alarm Cancel N
 
 The sensor cluster endpoints are in the following order:
 

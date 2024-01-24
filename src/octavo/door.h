@@ -109,6 +109,18 @@ protected:
 	void updated_value(bool value) override;
 };
 
+class AlarmCancelCluster: public BooleanCluster {
+public:
+	explicit AlarmCancelCluster(Door &door);
+	~AlarmCancelCluster() = delete;
+
+	void configure_cluster_list(esp_zb_cluster_list_t &cluster_list) override;
+
+protected:
+	bool refresh_value() override;
+	void updated_value(bool value) override;
+};
+
 class AnalogCluster: public ZigbeeCluster {
 protected:
 	AnalogCluster(Door &door, const char *name, uint16_t cluster_id,
@@ -179,7 +191,7 @@ public:
 	~Door() = delete;
 
 	static constexpr const char *TAG = "octavo.Door";
-	static constexpr const size_t NUM_EP_PER_DOOR = 5;
+	static constexpr const size_t NUM_EP_PER_DOOR = 6;
 
 	inline uint8_t index() const { return index_; }
 
@@ -192,6 +204,9 @@ public:
 
 	bool alarm_enable() const;
 	void alarm_enable(bool state);
+
+	bool alarm_cancel() const;
+	void alarm_cancel(bool state);
 
 	uint64_t alarm_time1_us() const;
 	void alarm_time1_us(uint64_t value);
@@ -208,6 +223,7 @@ private:
 	static constexpr const ep_id_t ALARM_ENABLE_BASE_EP_ID = 30;
 	static constexpr const ep_id_t ALARM_TIME1_BASE_EP_ID = 40;
 	static constexpr const ep_id_t ALARM_TIME2_BASE_EP_ID = 50;
+	static constexpr const ep_id_t ALARM_CANCEL_BASE_EP_ID = 60;
 	static constexpr const unsigned long DEBOUNCE_US = std::chrono::microseconds{std::chrono::milliseconds{20}}.count();
 	static constexpr const std::chrono::microseconds MIN_ALARM_TIME_US{MIN_ALARM_TIME_S};
 	static constexpr const std::chrono::microseconds MAX_ALARM_TIME_US{MAX_ALARM_TIME_S};
@@ -238,12 +254,14 @@ private:
 	uint64_t switch_change_us_{0};
 	uint8_t alarm_level_{0};
 	bool alarm_enable_{true};
+	bool alarm_cancel_{false};
 	uint64_t alarm_time1_us_{std::chrono::microseconds(std::chrono::seconds(CONFIG_OCTAVO_DEFAULT_ALARM_TIME1_S)).count()};
 	uint64_t alarm_time2_us_{std::chrono::microseconds(std::chrono::seconds(CONFIG_OCTAVO_DEFAULT_ALARM_TIME2_S)).count()};
 
 	door::DoorStatusCluster &door_status_cl_;
 	door::AlarmStatusCluster &alarm_status_cl_;
 	door::AlarmEnableCluster &alarm_enable_cl_;
+	door::AlarmCancelCluster &alarm_cancel_cl_;
 	door::AlarmTime1Cluster &alarm_time1_cl_;
 	door::AlarmTime2Cluster &alarm_time2_cl_;
 
