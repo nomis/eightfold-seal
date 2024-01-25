@@ -25,7 +25,6 @@
 #include <esp_zigbee_type.h>
 #include <nvs.h>
 #include <nvs_handle.hpp>
-#include <driver/gpio.h>
 #include <ha/esp_zigbee_ha_standard.h>
 
 #include <cinttypes>

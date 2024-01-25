@@ -23,6 +23,7 @@
 #include <nvs_flash.h>
 #include <driver/gpio.h>
 
+#include "octavo/buzzer.h"
 #include "octavo/device.h"
 #include "octavo/door.h"
 #include "octavo/log.h"
@@ -45,7 +46,8 @@ extern "C" void app_main() {
 
 	ESP_ERROR_CHECK(gpio_install_isr_service(ESP_INTR_FLAG_LEVEL2));
 
-	auto &ui = *new UserInterface{logging, GPIO_NUM_4, true};
+	auto &buzzer = *new Buzzer{GPIO_NUM_0, BUZZER_ACTIVE_LOW};
+	auto &ui = *new UserInterface{logging, buzzer, GPIO_NUM_4, true};
 	auto &device = *new Device{ui};
 
 	/*                                Switch       Active Low

@@ -127,6 +127,8 @@ UART Commands
      - Join Zigbee network (no effect if already joined/joining)
    * - ``l``
      - Leave Zigbee network (no effect if already left)
+   * - ``z``
+     - Test buzzer
    * - ``m``
      - Print memory information
    * - ``n``

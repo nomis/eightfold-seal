@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS
 		base64.cpp
+		buzzer.cpp
 		debounce.cpp
 		device.cpp
 		door.cpp

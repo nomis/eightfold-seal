@@ -32,6 +32,7 @@
 
 namespace octavo {
 
+class Buzzer;
 class Device;
 class Logging;
 
@@ -104,7 +105,7 @@ enum class NetworkState {
 
 class UserInterface: public WakeupThread {
 public:
-	UserInterface(Logging &logging, gpio_num_t network_join_pin, bool active_low);
+	UserInterface(Logging &logging, Buzzer &buzzer, gpio_num_t network_join_pin, bool active_low);
 	~UserInterface() = delete;
 
 	// cppcheck-suppress duplInheritedMember
@@ -122,10 +123,14 @@ public:
 	void ota_update(bool ok);
 	void core_dump(bool present);
 
+	void buzzer(bool state);
+	void buzzer(unsigned int milliseconds);
+
 private:
 	static constexpr const unsigned long DEBOUNCE_PRESS_US = 100 * 1000;
 	static constexpr const unsigned long DEBOUNCE_RELEASE_US = 1 * 1000 * 1000;
 	static constexpr const uint8_t LED_LEVEL = CONFIG_OCTAVO_UI_LED_BRIGHTNESS;
+	static constexpr const unsigned int BUZZER_DURATION_MS = 250;
 	static const std::unordered_map<ui::Event,ui::LEDSequence> led_sequences_;
 
 	unsigned long run_tasks() override;
@@ -141,9 +146,11 @@ private:
 	void stop_event(ui::Event event);
 	void stop_events(std::initializer_list<ui::Event> events);
 	void set_led(ui::RGBColour colour);
+	unsigned long update_buzzer();
 	unsigned long update_led();
 
 	Logging &logging_;
+	Buzzer &buzzer_;
 	Debounce button_debounce_;
 	led_strip_handle_t led_strip_{nullptr};
 	Device *device_{nullptr};
@@ -154,6 +161,7 @@ private:
 	std::mutex mutex_;
 	std::bitset<static_cast<unsigned long>(ui::Event::IDLE) + 1> active_events_;
 	std::unordered_map<ui::Event,ui::LEDSequence> active_sequence_;
+	uint64_t buzzer_stop_time_us_{0};
 };
 
 } // namespace octavo

@@ -36,6 +36,7 @@
 #include <thread>
 #include <unordered_map>
 
+#include "octavo/buzzer.h"
 #include "octavo/debounce.h"
 #include "octavo/device.h"
 #include "octavo/log.h"
@@ -80,10 +81,10 @@ using ui::Event;
 using ui::NetworkState;
 using ui::RGBColour;
 
-UserInterface::UserInterface(Logging &logging, gpio_num_t network_join_pin,
-		bool active_low) : WakeupThread("UI"), logging_(logging),
-		button_debounce_(network_join_pin, active_low, DEBOUNCE_PRESS_US,
-			DEBOUNCE_RELEASE_US) {
+UserInterface::UserInterface(Logging &logging, Buzzer &buzzer,
+		gpio_num_t network_join_pin, bool active_low) : WakeupThread("UI"),
+		logging_(logging), buzzer_(buzzer), button_debounce_(network_join_pin,
+			active_low, DEBOUNCE_PRESS_US, DEBOUNCE_RELEASE_US) {
 	led_strip_config_t led_strip_config{};
 	led_strip_rmt_config_t rmt_config{};
 
@@ -135,7 +136,7 @@ void UserInterface::start() {
 
 	button_debounce_.start(*this);
 
-	make_thread(t, "ui_main", 4096, 2, &UserInterface::run_loop, this);
+	make_thread(t, "ui_main", 4096, 10, &UserInterface::run_loop, this);
 	t.detach();
 
 	make_thread(t, "ui_uart", 6144, 1, &UserInterface::uart_handler, this);
@@ -157,7 +158,7 @@ unsigned long UserInterface::run_tasks() {
 		}
 	}
 
-	return std::min(debounce.wait_ms, update_led());
+	return std::min(std::min(debounce.wait_ms, update_buzzer()), update_led());
 }
 
 void UserInterface::uart_handler() {
@@ -198,6 +199,8 @@ void UserInterface::uart_handler() {
 				esp_restart();
 			} else if (buf[0] == 't') {
 				print_tasks();
+			} else if (buf[0] == 'z') {
+				buzzer(BUZZER_DURATION_MS);
 			}
 		}
 	}
@@ -272,11 +275,28 @@ inline void UserInterface::stop_events(std::initializer_list<Event> events) {
 		stop_event(event);
 }
 
+unsigned long UserInterface::update_buzzer() {
+	if (buzzer_stop_time_us_) {
+		std::unique_lock lock{mutex_};
+		uint64_t now_us = esp_timer_get_time();
+
+		if (now_us >= buzzer_stop_time_us_) {
+			buzzer_stop_time_us_ = 0;
+			buzzer_.off();
+		} else {
+			return std::min(static_cast<unsigned long>((buzzer_stop_time_us_ - now_us) / 1000UL), ULONG_MAX - 1);
+		}
+	}
+
+	return ULONG_MAX;
+}
+
 unsigned long UserInterface::update_led() {
-	uint64_t now_us_ = esp_timer_get_time();
+	std::unique_lock lock{mutex_};
+	uint64_t now_us = esp_timer_get_time();
 
 	if (render_time_us_ && event_active(render_event_)) {
-		uint64_t elapsed_us = now_us_ - render_time_us_;
+		uint64_t elapsed_us = now_us - render_time_us_;
 		auto &sequence = active_sequence_[render_event_];
 
 		if (sequence.states[0].duration_ms) {
@@ -302,8 +322,6 @@ unsigned long UserInterface::update_led() {
 	unsigned long wait_ms;
 	RGBColour colour;
 	Event event;
-
-	std::unique_lock lock{mutex_};
 	unsigned long value = ffsl(active_events_.to_ulong());
 
 	if (value) {
@@ -457,6 +475,31 @@ void UserInterface::core_dump(bool present) {
 		start_event(Event::CORE_DUMP_PRESENT);
 	}
 	wake_up();
+}
+
+
+void UserInterface::buzzer(bool state) {
+	std::lock_guard lock{mutex_};
+
+	buzzer_stop_time_us_ = 0;
+	if (state) {
+		buzzer_.on();
+	} else {
+		buzzer_.off();
+	}
+}
+
+void UserInterface::buzzer(unsigned int milliseconds) {
+	if (milliseconds) {
+		std::lock_guard lock{mutex_};
+		uint64_t now_us = esp_timer_get_time();
+
+		buzzer_stop_time_us_ = now_us + std::chrono::microseconds(std::chrono::milliseconds(milliseconds)).count();
+		buzzer_.on();
+		wake_up();
+	} else {
+		buzzer(false);
+	}
 }
 
 } // namespace octavo
