@@ -234,6 +234,48 @@ uint8_t Door::alarm_level() const {
 	return alarm_level_;
 }
 
+uint8_t door::Alarm::level(uint64_t now) const {
+	if (open_time_us) {
+		if (now >= open_time_us + level1_time_us) {
+			if (now >= open_time_us + level1_time_us + level2_time_us) {
+				return 2;
+			}
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+door::Alarm Door::alarm_status(bool refreshing) {
+	std::lock_guard lock{mutex_};
+	door::Alarm status{};
+
+	if (alarm_enable_ && switch_active_) {
+		status.open_time_us = switch_change_us_;
+		status.level1_time_us = alarm_time1_us_;
+		status.level2_time_us = alarm_time2_us_;
+	}
+
+	uint8_t level = status.level();
+	if (alarm_level_ != level) {
+		ESP_LOGD(TAG, "Door %u alarm level %d -> %d",
+			index_, alarm_level_, level);
+		alarm_level_ = level;
+
+		if (!refreshing) {
+			request_refresh();
+		}
+	}
+
+	if (alarm_cancel_) {
+		status.open_time_us = 0;
+	}
+
+	return status;
+}
+
 bool Door::alarm_enable() const {
 	std::lock_guard lock{mutex_};
 	return alarm_enable_;
@@ -304,7 +346,6 @@ void Door::alarm_time2_us(uint64_t value) {
 }
 
 void Door::update_state() {
-	/* TODO */
 	request_refresh();
 }
 
@@ -313,6 +354,7 @@ void Door::request_refresh() {
 }
 
 void Door::refresh() {
+	alarm_status(true);
 	door_status_cl_.refresh();
 	alarm_status_cl_.refresh();
 	alarm_time1_cl_.refresh();

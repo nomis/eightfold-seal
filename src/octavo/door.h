@@ -180,6 +180,15 @@ protected:
 	void updated_value(float value) override;
 };
 
+struct Alarm {
+	uint64_t open_time_us;
+	uint64_t level1_time_us;
+	uint64_t level2_time_us;
+
+	inline uint8_t level() const { return level(esp_timer_get_time()); }
+	uint8_t level(uint64_t now) const;
+};
+
 } // namespace door
 
 class Door {
@@ -201,6 +210,7 @@ public:
 
 	bool open() const;
 	uint8_t alarm_level() const;
+	inline door::Alarm alarm_status() { return alarm_status(false); }
 
 	bool alarm_enable() const;
 	void alarm_enable(bool state);
@@ -243,8 +253,8 @@ private:
 	void alarm_time2_us_nvs(uint64_t value);
 
 	void open(bool state);
-
 	void update_state();
+	door::Alarm alarm_status(bool refreshing);
 
 	const uint8_t index_;
 	Debounce switch_debounce_;
