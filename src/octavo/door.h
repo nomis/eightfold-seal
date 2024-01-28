@@ -184,9 +184,7 @@ struct Alarm {
 	uint64_t open_time_us;
 	uint64_t level1_time_us;
 	uint64_t level2_time_us;
-
-	inline uint8_t level() const { return level(esp_timer_get_time()); }
-	uint8_t level(uint64_t now) const;
+	uint8_t level;
 };
 
 } // namespace door
@@ -210,7 +208,7 @@ public:
 
 	bool open() const;
 	uint8_t alarm_level() const;
-	inline door::Alarm alarm_status() { return alarm_status(false); }
+	door::Alarm alarm_status() const;
 
 	bool alarm_enable() const;
 	void alarm_enable(bool state);
@@ -254,7 +252,8 @@ private:
 
 	void open(bool state);
 	void update_state();
-	door::Alarm alarm_status(bool refreshing);
+	unsigned long update_alarm();
+	unsigned long update_alarm_locked();
 
 	const uint8_t index_;
 	Debounce switch_debounce_;

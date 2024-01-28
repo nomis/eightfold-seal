@@ -197,6 +197,7 @@ public:
 	void add(Door &door, std::vector<std::reference_wrapper<ZigbeeEndpoint>> &&endpoints);
 	void start();
 	void request_refresh(Door &door);
+	using WakeupThread::wake_up;
 
 	inline UserInterface& ui() { return ui_; };
 	void join_network();

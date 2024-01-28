@@ -184,13 +184,13 @@ unsigned long Door::run() {
 			if (!state) {
 				alarm_cancel_ = false;
 			}
-			request_refresh();
 		} else {
 			open(switch_debounce_.value());
 		}
+		request_refresh();
 	}
 
-	return debounce.wait_ms;
+	return std::min(debounce.wait_ms, update_alarm());
 }
 
 bool Door::open() const {
@@ -220,7 +220,7 @@ void Door::open(bool state) {
 		alarm_cancel_ = false;
 	}
 
-	update_state();
+	update_alarm_locked();
 
 	if (state) {
 		device_->ui().door_opened();
@@ -234,46 +234,56 @@ uint8_t Door::alarm_level() const {
 	return alarm_level_;
 }
 
-uint8_t door::Alarm::level(uint64_t now) const {
-	if (open_time_us) {
-		if (now >= open_time_us + level1_time_us) {
-			if (now >= open_time_us + level1_time_us + level2_time_us) {
-				return 2;
-			}
-
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-door::Alarm Door::alarm_status(bool refreshing) {
+door::Alarm Door::alarm_status() const {
 	std::lock_guard lock{mutex_};
 	door::Alarm status{};
 
-	if (alarm_enable_ && switch_active_) {
+	if (alarm_enable_ && switch_active_ && !alarm_cancel_) {
 		status.open_time_us = switch_change_us_;
 		status.level1_time_us = alarm_time1_us_;
 		status.level2_time_us = alarm_time2_us_;
+		status.level = alarm_level_;
 	}
 
-	uint8_t level = status.level();
+	return status;
+}
+
+unsigned long Door::update_alarm() {
+	std::lock_guard lock{mutex_};
+	return update_alarm_locked();
+}
+
+unsigned long Door::update_alarm_locked() {
+	uint64_t now_us = esp_timer_get_time();
+	uint64_t next_us;
+	uint8_t level = 0;
+	unsigned long wait_ms = ULONG_MAX;
+
+	if (switch_change_us_ && switch_active_) {
+		next_us = switch_change_us_ + alarm_time1_us_;
+
+		if (now_us >= next_us) {
+			next_us += alarm_time2_us_;
+
+			if (now_us >= next_us) {
+				level = 2;
+			} else {
+				level = 1;
+				wait_ms = std::min(static_cast<unsigned long>((next_us - now_us) / 1000UL), ULONG_MAX - 1);
+			}
+		} else {
+			wait_ms = std::min(static_cast<unsigned long>((next_us - now_us) / 1000UL), ULONG_MAX - 1);
+		}
+	}
+
 	if (alarm_level_ != level) {
 		ESP_LOGD(TAG, "Door %u alarm level %d -> %d",
 			index_, alarm_level_, level);
 		alarm_level_ = level;
-
-		if (!refreshing) {
-			request_refresh();
-		}
+		request_refresh();
 	}
 
-	if (alarm_cancel_) {
-		status.open_time_us = 0;
-	}
-
-	return status;
+	return wait_ms;
 }
 
 bool Door::alarm_enable() const {
@@ -289,6 +299,8 @@ void Door::alarm_enable(bool state) {
 	enable_nvs(state);
 	alarm_enable_ = state;
 	update_state();
+
+	device_->wake_up();
 }
 
 bool Door::alarm_cancel() const {
@@ -325,6 +337,7 @@ void Door::alarm_time1_us(uint64_t value) {
 		index_, alarm_time1_us_, value);
 	alarm_time1_us_nvs(value);
 	alarm_time1_us_ = value;
+	update_alarm_locked();
 	update_state();
 }
 
@@ -342,10 +355,12 @@ void Door::alarm_time2_us(uint64_t value) {
 		index_, alarm_time2_us_, value);
 	alarm_time2_us_nvs(value);
 	alarm_time2_us_ = value;
+	update_alarm_locked();
 	update_state();
 }
 
 void Door::update_state() {
+	device_->wake_up();
 	request_refresh();
 }
 
@@ -354,7 +369,6 @@ void Door::request_refresh() {
 }
 
 void Door::refresh() {
-	alarm_status(true);
 	door_status_cl_.refresh();
 	alarm_status_cl_.refresh();
 	alarm_time1_cl_.refresh();
