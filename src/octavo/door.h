@@ -185,6 +185,8 @@ struct Alarm {
 	uint64_t level1_time_us;
 	uint64_t level2_time_us;
 	uint8_t level;
+
+	Alarm& operator|=(const Alarm &rhs);
 };
 
 } // namespace door

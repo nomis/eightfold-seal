@@ -303,9 +303,12 @@ void Device::scheduled_connected(uint8_t param) {
 
 unsigned long Device::run_tasks() {
 	unsigned long wait_ms = ULONG_MAX;
+	door::Alarm status{};
 
-	for (auto &door : doors_)
+	for (auto &door : doors_) {
 		wait_ms = std::min(wait_ms, door.second.run());
+		status |= door.second.alarm_status();
+	}
 
 	return wait_ms;
 }

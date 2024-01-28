@@ -248,6 +248,27 @@ door::Alarm Door::alarm_status() const {
 	return status;
 }
 
+door::Alarm& door::Alarm::operator|=(const Alarm &rhs) {
+	if (!open_time_us) {
+		*this = rhs;
+	} else if (rhs.open_time_us) {
+		uint64_t min_open_time_us = std::min(open_time_us, rhs.open_time_us);
+		uint64_t min_abs_level1_time_us = std::min(
+			open_time_us + level1_time_us,
+			rhs.open_time_us + rhs.level1_time_us);
+		uint64_t min_abs_level2_time_us = std::min(
+			open_time_us + level1_time_us + level2_time_us,
+			rhs.open_time_us + rhs.level1_time_us + rhs.level2_time_us);
+
+		open_time_us = min_open_time_us;
+		level1_time_us = min_abs_level1_time_us - min_open_time_us;
+		level2_time_us = min_abs_level2_time_us - min_abs_level1_time_us;
+		level = std::max(level, rhs.level);
+	}
+
+	return *this;
+}
+
 unsigned long Door::update_alarm() {
 	std::lock_guard lock{mutex_};
 	return update_alarm_locked();
