@@ -193,7 +193,7 @@ struct Alarm {
 
 class Door {
 public:
-	static constexpr const std::chrono::seconds MIN_ALARM_TIME_S{1};
+	static constexpr const std::chrono::seconds MIN_ALARM_TIME_S{0};
 	static constexpr const std::chrono::seconds MAX_ALARM_TIME_S{300};
 
 	Door(uint8_t index, gpio_num_t switch_pin, bool switch_active_low);
