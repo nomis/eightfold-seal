@@ -82,9 +82,10 @@ using ui::NetworkState;
 using ui::RGBColour;
 
 UserInterface::UserInterface(Logging &logging, Buzzer &buzzer,
-		gpio_num_t network_join_pin, bool active_low) : WakeupThread("UI"),
-		logging_(logging), buzzer_(buzzer), button_debounce_(network_join_pin,
-			active_low, DEBOUNCE_PRESS_US, DEBOUNCE_RELEASE_US) {
+		gpio_num_t network_join_pin, bool active_low)
+		: WakeupThread("UI", false), logging_(logging), buzzer_(buzzer),
+		button_debounce_(network_join_pin, active_low, DEBOUNCE_PRESS_US,
+			DEBOUNCE_RELEASE_US) {
 	led_strip_config_t led_strip_config{};
 	led_strip_rmt_config_t rmt_config{};
 
