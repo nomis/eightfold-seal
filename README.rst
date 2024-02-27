@@ -137,6 +137,8 @@ UART Commands
      - Print task list and stats
    * - ``R``
      - Restart
+   * - ``A``
+     - ZBOSS assert (used for testing to generate a core dump)
    * - ``C``
      - Crash (used for testing to generate a core dump)
    * - ``d``
