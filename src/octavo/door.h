@@ -70,7 +70,7 @@ private:
 	const char *label_{"Unknown"};
 	const uint16_t attr_id_;
 	uint32_t app_type_{0};
-	uint8_t state_;
+	uint8_t state_{0};
 };
 
 class DoorStatusCluster: public BooleanCluster {
@@ -153,7 +153,7 @@ private:
 	float min_value_{NAN};
 	float max_value_{NAN};
 	float resolution_{NAN};
-	float state_;
+	float state_{NAN};
 };
 
 class AlarmTime1Cluster: public AnalogCluster {
