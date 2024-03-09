@@ -19,6 +19,7 @@ idf_component_register(
 		espcoredump
 		esp_timer
 		freertos
+		ieee802154
 		nvs_flash
 		pthread
 )
