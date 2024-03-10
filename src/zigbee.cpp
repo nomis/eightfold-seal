@@ -127,7 +127,7 @@ void ZigbeeDevice::add(ZigbeeEndpoint &endpoint) {
 		endpoint.configure_cluster_list(*cluster_list);
 
 		ESP_ERROR_CHECK(esp_zb_ep_list_add_ep(endpoint_list_, cluster_list,
-			endpoint.id(), endpoint.profile_id(), endpoint.device_id()));
+			{endpoint.id(), endpoint.profile_id(), endpoint.device_id(), 0}));
 
 		endpoint.attach(*this);
 	}
@@ -151,7 +151,9 @@ void ZigbeeDevice::start() {
 
 void ZigbeeDevice::run() {
 	while (true) {
+		assert(esp_zb_lock_acquire(portMAX_DELAY));
 		zboss_main_loop_iteration();
+		esp_zb_lock_release();
 
 		std::unique_lock lock{tasks_mutex_};
 		uint64_t now_us = esp_timer_get_time();
