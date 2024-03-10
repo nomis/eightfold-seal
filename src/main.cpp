@@ -20,6 +20,7 @@
 
 #include <esp_err.h>
 #include <esp_log.h>
+#include <esp_task_wdt.h>
 #include <nvs_flash.h>
 #include <driver/gpio.h>
 
@@ -35,12 +36,15 @@ static_assert(octavo::Device::NUM_EP_PER_DEVICE + MAX_DOORS * octavo::Door::NUM_
 	"You'll need to ask Espressif to let you use more endpoints");
 
 extern "C" void app_main() {
+	ESP_ERROR_CHECK(esp_task_wdt_add(nullptr));
+
 	esp_err_t err = nvs_flash_init();
 	if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
 		ESP_ERROR_CHECK(nvs_flash_erase());
 		err = nvs_flash_init();
 	}
 	ESP_ERROR_CHECK(err);
+	ESP_ERROR_CHECK(esp_task_wdt_reset());
 
 	auto &logging = *new Logging{};
 
@@ -57,13 +61,18 @@ extern "C" void app_main() {
 	if (MAX_DOORS >= 2) (new Door{2, GPIO_NUM_2,  SWITCH_ACTIVE_LOW })->attach(device);
 	if (MAX_DOORS >= 3) (new Door{3, GPIO_NUM_11, SWITCH_ACTIVE_LOW })->attach(device);
 	if (MAX_DOORS >= 4) (new Door{4, GPIO_NUM_10, SWITCH_ACTIVE_LOW })->attach(device);
+
+	ESP_ERROR_CHECK(esp_task_wdt_reset());
 	device.start();
 
 	ui.attach(device);
 	ui.start();
+	ESP_ERROR_CHECK(esp_task_wdt_reset());
 
 	TaskStatus_t status;
 
 	vTaskGetInfo(nullptr, &status, pdTRUE, eRunning);
 	ESP_LOGD(TAG, "Free stack: %lu", status.usStackHighWaterMark);
+
+	ESP_ERROR_CHECK(esp_task_wdt_delete(nullptr));
 }
