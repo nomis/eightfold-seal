@@ -24,11 +24,12 @@
 
 namespace octavo {
 
-Debounce::Debounce(gpio_num_t pin, bool active_low, unsigned long duration_us)
-		: Debounce(pin, active_low, duration_us, duration_us) {
+Debounce::Debounce(gpio_num_t pin, bool active_low, bool pull_active,
+		unsigned long duration_us)
+		: Debounce(pin, active_low, pull_active, duration_us, duration_us) {
 }
 
-Debounce::Debounce(gpio_num_t pin, bool active_low,
+Debounce::Debounce(gpio_num_t pin, bool active_low, bool pull_active,
 		unsigned long press_duration_us, unsigned long release_duration_us)
 		: press_duration_us_(press_duration_us),
 		release_duration_us_(release_duration_us),
@@ -36,8 +37,8 @@ Debounce::Debounce(gpio_num_t pin, bool active_low,
 	gpio_config_t config = {
 		.pin_bit_mask = 1ULL << pin_,
 		.mode = GPIO_MODE_INPUT,
-		.pull_up_en = active_low_ ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE,
-		.pull_down_en = active_low_ ? GPIO_PULLDOWN_DISABLE : GPIO_PULLDOWN_ENABLE,
+		.pull_up_en = (active_low_ ^ pull_active) ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE,
+		.pull_down_en = (active_low_ ^ pull_active) ? GPIO_PULLDOWN_DISABLE : GPIO_PULLDOWN_ENABLE,
 		.intr_type = GPIO_INTR_DISABLE,
 	};
 

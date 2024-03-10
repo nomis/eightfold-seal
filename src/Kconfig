@@ -14,6 +14,14 @@ config OCTAVO_SWITCH_ACTIVE_LOW
 	help
 		Configure whether switch signalling is active low or high.
 
+config OCTAVO_SWITCH_PULL_ACTIVE
+	bool "Pull switch active"
+	default y
+	help
+		Configure whether switch should be pulled active or inactive.
+
+		This is recommended to detect a disconnected switch.
+
 config OCTAVO_BUZZER_ACTIVE_LOW
 	bool "Buzzer is active low"
 	default n

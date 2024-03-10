@@ -196,7 +196,8 @@ public:
 	static constexpr const std::chrono::seconds MIN_ALARM_TIME_S{0};
 	static constexpr const std::chrono::seconds MAX_ALARM_TIME_S{300};
 
-	Door(uint8_t index, gpio_num_t switch_pin, bool switch_active_low);
+	Door(uint8_t index, gpio_num_t switch_pin, bool switch_active_low,
+		bool switch_pull_active);
 	~Door() = delete;
 
 	static constexpr const char *TAG = "octavo.Door";

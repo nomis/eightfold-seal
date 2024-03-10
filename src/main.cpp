@@ -54,13 +54,10 @@ extern "C" void app_main() {
 	auto &ui = *new UserInterface{logging, buzzer, GPIO_NUM_4, true};
 	auto &device = *new Device{ui};
 
-	/*                                Switch       Active Low
-	 *                                -----------  -----------------
-	 */
-	if (MAX_DOORS >= 1) (new Door{1, GPIO_NUM_3,  SWITCH_ACTIVE_LOW })->attach(device);
-	if (MAX_DOORS >= 2) (new Door{2, GPIO_NUM_2,  SWITCH_ACTIVE_LOW })->attach(device);
-	if (MAX_DOORS >= 3) (new Door{3, GPIO_NUM_11, SWITCH_ACTIVE_LOW })->attach(device);
-	if (MAX_DOORS >= 4) (new Door{4, GPIO_NUM_10, SWITCH_ACTIVE_LOW })->attach(device);
+	if (MAX_DOORS >= 1) (new Door{1, GPIO_NUM_3,  SWITCH_ACTIVE_LOW, SWITCH_PULL_ACTIVE })->attach(device);
+	if (MAX_DOORS >= 2) (new Door{2, GPIO_NUM_2,  SWITCH_ACTIVE_LOW, SWITCH_PULL_ACTIVE })->attach(device);
+	if (MAX_DOORS >= 3) (new Door{3, GPIO_NUM_11, SWITCH_ACTIVE_LOW, SWITCH_PULL_ACTIVE })->attach(device);
+	if (MAX_DOORS >= 4) (new Door{4, GPIO_NUM_10, SWITCH_ACTIVE_LOW, SWITCH_PULL_ACTIVE })->attach(device);
 
 	ESP_ERROR_CHECK(esp_task_wdt_reset());
 	device.start();

@@ -39,9 +39,10 @@ class Debounce {
 	friend void debounce_interrupt_handler(void *arg);
 
 public:
-	Debounce(gpio_num_t pin, bool active_low, unsigned long duration_us);
-	Debounce(gpio_num_t pin, bool active_low, unsigned long press_duration_us,
-		unsigned long release_duration_us);
+	Debounce(gpio_num_t pin, bool active_low, bool pull_active,
+		unsigned long duration_us);
+	Debounce(gpio_num_t pin, bool active_low, bool pull_active,
+		unsigned long press_duration_us, unsigned long release_duration_us);
 	~Debounce();
 
 	void start(WakeupThread &wakeup);
