@@ -208,7 +208,7 @@ void UserInterface::uart_handler() {
 			} else if (buf[0] == 't') {
 				print_tasks();
 			} else if (buf[0] == 'z') {
-				buzzer(BUZZER_DURATION_MS);
+				buzzer_test();
 			}
 		}
 	}
@@ -284,19 +284,63 @@ inline void UserInterface::stop_events(std::initializer_list<Event> events) {
 }
 
 unsigned long UserInterface::update_buzzer() {
-	if (buzzer_stop_time_us_) {
-		std::unique_lock lock{mutex_};
-		uint64_t now_us = esp_timer_get_time();
+	std::unique_lock lock{mutex_};
+	uint64_t now_us = esp_timer_get_time();
 
-		if (now_us >= buzzer_stop_time_us_) {
+	if (event_active(Event::DOOR_ALARM2)) {
+		if (!buzzer_start_time_us_) {
+			buzzer_start_time_us_ = now_us;
 			buzzer_stop_time_us_ = 0;
-			buzzer_.off();
-		} else {
-			return std::min(static_cast<unsigned long>((buzzer_stop_time_us_ - now_us) / 1000UL), ULONG_MAX - 1);
+			buzzer_test_ = false;
+			buzzer_.on();
 		}
-	}
 
-	return ULONG_MAX;
+		return ULONG_MAX;
+	} else if (event_active(Event::DOOR_ALARM1)) {
+		if (buzzer_start_time_us_) {
+			if (!buzzer_stop_time_us_) {
+				buzzer_stop_time_us_ = now_us + BUZZER_DURATION_US;
+			}
+
+			if (now_us >= buzzer_stop_time_us_) {
+				buzzer_start_time_us_ = 0;
+				buzzer_stop_time_us_ = now_us;
+				buzzer_test_ = false;
+				buzzer_.off();
+			}
+		}
+
+		if (!buzzer_start_time_us_) {
+			uint64_t next_time_us_ = buzzer_stop_time_us_ ? (buzzer_stop_time_us_ + BUZZER_INTERVAL_US) : 0;
+
+			if (now_us >= next_time_us_) {
+				buzzer_start_time_us_ = now_us;
+				buzzer_stop_time_us_ = now_us + BUZZER_DURATION_US;
+				buzzer_.on();
+			} else {
+				return std::min(static_cast<unsigned long>((next_time_us_ - now_us) / 1000UL), ULONG_MAX - 1);
+			}
+		}
+
+		return std::min(static_cast<unsigned long>((buzzer_stop_time_us_ - now_us) / 1000UL), ULONG_MAX - 1);
+	} else {
+		if (buzzer_start_time_us_ && !buzzer_test_) {
+			buzzer_stop_time_us_ = now_us;
+		}
+
+		if (buzzer_stop_time_us_) {
+			if (now_us >= buzzer_stop_time_us_) {
+				buzzer_start_time_us_ = 0;
+				buzzer_stop_time_us_ = 0;
+				buzzer_test_ = false;
+				buzzer_.off();
+			} else {
+				return std::min(static_cast<unsigned long>((buzzer_stop_time_us_ - now_us) / 1000UL), ULONG_MAX - 1);
+			}
+		}
+
+		return ULONG_MAX;
+	}
 }
 
 unsigned long UserInterface::update_led() {
@@ -463,13 +507,13 @@ void UserInterface::alarm_level(uint8_t level) {
 		stop_event(Event::DOOR_ALARM2);
 	}
 
-	if (level >= 1) {
-		if (!event_active(Event::DOOR_ALARM1)) {
-			restart_event(Event::DOOR_ALARM1);
-		}
-	} else if (level >= 2) {
+	if (level >= 2) {
 		if (!event_active(Event::DOOR_ALARM2)) {
 			restart_event(Event::DOOR_ALARM2);
+		}
+	} else if (level >= 1) {
+		if (!event_active(Event::DOOR_ALARM1)) {
+			restart_event(Event::DOOR_ALARM1);
 		}
 	}
 	wake_up();
@@ -485,29 +529,15 @@ void UserInterface::core_dump(bool present) {
 	wake_up();
 }
 
-
-void UserInterface::buzzer(bool state) {
+void UserInterface::buzzer_test() {
 	std::lock_guard lock{mutex_};
+	uint64_t now_us = esp_timer_get_time();
 
-	buzzer_stop_time_us_ = 0;
-	if (state) {
-		buzzer_.on();
-	} else {
-		buzzer_.off();
-	}
-}
-
-void UserInterface::buzzer(unsigned int milliseconds) {
-	if (milliseconds) {
-		std::lock_guard lock{mutex_};
-		uint64_t now_us = esp_timer_get_time();
-
-		buzzer_stop_time_us_ = now_us + std::chrono::microseconds(std::chrono::milliseconds(milliseconds)).count();
-		buzzer_.on();
-		wake_up();
-	} else {
-		buzzer(false);
-	}
+	buzzer_start_time_us_ = now_us;
+	buzzer_stop_time_us_ = now_us + BUZZER_DURATION_US;
+	buzzer_test_ = true;
+	buzzer_.on();
+	wake_up();
 }
 
 } // namespace octavo

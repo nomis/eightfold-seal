@@ -310,6 +310,8 @@ unsigned long Device::run_tasks() {
 		status |= door.second.alarm_status();
 	}
 
+	ui_.alarm_level(status.level);
+
 	return wait_ms;
 }
 

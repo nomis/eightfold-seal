@@ -45,8 +45,9 @@ namespace octavo {
 
 std::unique_ptr<nvs::NVSHandle> Door::nvs_;
 
-Door::Door(uint8_t index, gpio_num_t switch_pin, bool switch_active_low)
-		: index_(index), switch_debounce_(switch_pin, switch_active_low, DEBOUNCE_US),
+Door::Door(uint8_t index, gpio_num_t switch_pin, bool switch_active_low,
+		bool switch_pull_active) : index_(index), switch_debounce_(switch_pin,
+			switch_active_low, switch_pull_active, DEBOUNCE_US),
 		switch_active_(switch_debounce_.value()),
 		alarm_enable_(enable_nvs()),
 		alarm_time1_us_(alarm_time1_us_nvs()),

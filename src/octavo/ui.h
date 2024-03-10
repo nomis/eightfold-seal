@@ -23,6 +23,7 @@
 #include <sdkconfig.h>
 
 #include <bitset>
+#include <chrono>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -123,14 +124,14 @@ public:
 	void ota_update(bool ok);
 	void core_dump(bool present);
 
-	void buzzer(bool state);
-	void buzzer(unsigned int milliseconds);
-
 private:
-	static constexpr const unsigned long DEBOUNCE_PRESS_US = 100 * 1000;
-	static constexpr const unsigned long DEBOUNCE_RELEASE_US = 1 * 1000 * 1000;
+	void buzzer_test();
+
+	static constexpr const unsigned long DEBOUNCE_PRESS_US = std::chrono::microseconds(std::chrono::milliseconds(100)).count();
+	static constexpr const unsigned long DEBOUNCE_RELEASE_US = std::chrono::microseconds(std::chrono::seconds(1)).count();
 	static constexpr const uint8_t LED_LEVEL = CONFIG_OCTAVO_UI_LED_BRIGHTNESS;
-	static constexpr const unsigned int BUZZER_DURATION_MS = 250;
+	static constexpr const uint64_t BUZZER_DURATION_US = std::chrono::microseconds(std::chrono::milliseconds(250)).count();
+	static constexpr const uint64_t BUZZER_INTERVAL_US = std::chrono::microseconds(std::chrono::seconds(5)).count();
 	static const std::unordered_map<ui::Event,ui::LEDSequence> led_sequences_;
 
 	unsigned long run_tasks() override;
@@ -161,7 +162,9 @@ private:
 	std::mutex mutex_;
 	std::bitset<static_cast<unsigned long>(ui::Event::IDLE) + 1> active_events_;
 	std::unordered_map<ui::Event,ui::LEDSequence> active_sequence_;
+	uint64_t buzzer_start_time_us_{0};
 	uint64_t buzzer_stop_time_us_{0};
+	bool buzzer_test_{false};
 };
 
 } // namespace octavo
