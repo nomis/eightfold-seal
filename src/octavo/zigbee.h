@@ -213,7 +213,7 @@ public:
 	void schedule_cancel(const std::shared_ptr<std::function<void()>> &task);
 
 private:
-	using clock = std::chrono::high_resolution_clock;
+	using clock = std::chrono::steady_clock;
 
 	static constexpr uint32_t REFRESH_NEIGHBOURS_MS = 60000;
 
