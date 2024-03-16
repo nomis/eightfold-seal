@@ -277,12 +277,11 @@ unsigned long Door::update_alarm() {
 
 unsigned long Door::update_alarm_locked() {
 	uint64_t now_us = esp_timer_get_time();
-	uint64_t next_us;
 	uint8_t level = 0;
 	unsigned long wait_ms = ULONG_MAX;
 
 	if (switch_change_us_ && switch_active_) {
-		next_us = switch_change_us_ + alarm_time1_us_;
+		uint64_t next_us = switch_change_us_ + alarm_time1_us_;
 
 		if (now_us >= next_us) {
 			next_us += alarm_time2_us_;

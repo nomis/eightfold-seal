@@ -42,6 +42,7 @@ extern "C" {
 #include "octavo/buzzer.h"
 #include "octavo/debounce.h"
 #include "octavo/device.h"
+#include "octavo/door.h"
 #include "octavo/log.h"
 #include "octavo/zigbee.h"
 
@@ -309,7 +310,26 @@ unsigned long UserInterface::update_buzzer() {
 		}
 
 		if (!buzzer_start_time_us_) {
-			uint64_t next_time_us_ = buzzer_stop_time_us_ ? (buzzer_stop_time_us_ + BUZZER_INTERVAL_US) : 0;
+			uint64_t interval_us;
+
+			if (buzzer_stop_time_us_) {
+				uint64_t last_stop_time_us = std::max(buzzer_stop_time_us_, alarm_level1_time_us_);
+				uint64_t level1_duration_us = alarm_level2_time_us_ - alarm_level1_time_us_;
+
+				if (level1_duration_us && last_stop_time_us < alarm_level2_time_us_) {
+					constexpr uint64_t interval_range_us = (BUZZER_MAX_INTERVAL_US - BUZZER_MIN_INTERVAL_US);
+					uint64_t level1_remaining_us = alarm_level2_time_us_ - last_stop_time_us;
+
+					interval_us = BUZZER_MIN_INTERVAL_US
+						+ (interval_range_us * level1_remaining_us) / level1_duration_us;
+				} else {
+					interval_us = BUZZER_MIN_INTERVAL_US;
+				}
+			} else {
+				interval_us = 0;
+			}
+
+			uint64_t next_time_us_ = buzzer_stop_time_us_ + interval_us;
 
 			if (now_us >= next_time_us_) {
 				buzzer_start_time_us_ = now_us;
@@ -494,24 +514,31 @@ void UserInterface::door_closed() {
 	wake_up();
 }
 
-void UserInterface::alarm_level(uint8_t level) {
+void UserInterface::alarm(const door::Alarm &status) {
 	std::lock_guard lock{mutex_};
 
-	if (level != 1) {
+	if (status.level != 1) {
 		stop_event(Event::DOOR_ALARM1);
+		alarm_level1_time_us_ = 0;
+		alarm_level2_time_us_ = 0;
 	}
 
-	if (level < 2) {
+	if (status.level < 2) {
 		stop_event(Event::DOOR_ALARM2);
 	}
 
-	if (level >= 2) {
+	if (status.level >= 2) {
 		if (!event_active(Event::DOOR_ALARM2)) {
-			restart_event(Event::DOOR_ALARM2);
+			start_event(Event::DOOR_ALARM2);
 		}
-	} else if (level >= 1) {
+	} else if (status.level >= 1) {
+		alarm_level1_time_us_ = status.open_time_us + status.level1_time_us;
+		alarm_level2_time_us_ = alarm_level1_time_us_;
+		if (status.level2_time_us > BUZZER_RAPID_DURATION_US) {
+			alarm_level2_time_us_ += status.level2_time_us - BUZZER_RAPID_DURATION_US;
+		}
 		if (!event_active(Event::DOOR_ALARM1)) {
-			restart_event(Event::DOOR_ALARM1);
+			start_event(Event::DOOR_ALARM1);
 		}
 	}
 	wake_up();

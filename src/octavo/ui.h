@@ -37,6 +37,12 @@ class Buzzer;
 class Device;
 class Logging;
 
+namespace door {
+
+struct Alarm;
+
+} // namespace door
+
 namespace ui {
 
 struct RGBColour {
@@ -120,7 +126,7 @@ public:
 	void identify(uint16_t seconds);
 	void door_opened();
 	void door_closed();
-	void alarm_level(uint8_t level);
+	void alarm(const door::Alarm &status);
 	void ota_update(bool ok);
 	void core_dump(bool present);
 
@@ -131,7 +137,9 @@ private:
 	static constexpr const unsigned long DEBOUNCE_RELEASE_US = std::chrono::microseconds(std::chrono::seconds(1)).count();
 	static constexpr const uint8_t LED_LEVEL = CONFIG_OCTAVO_UI_LED_BRIGHTNESS;
 	static constexpr const uint64_t BUZZER_DURATION_US = std::chrono::microseconds(std::chrono::milliseconds(250)).count();
-	static constexpr const uint64_t BUZZER_INTERVAL_US = std::chrono::microseconds(std::chrono::seconds(5)).count();
+	static constexpr const uint64_t BUZZER_MIN_INTERVAL_US = BUZZER_DURATION_US;
+	static constexpr const uint64_t BUZZER_MAX_INTERVAL_US = std::chrono::microseconds(std::chrono::seconds(5)).count();
+	static constexpr const uint64_t BUZZER_RAPID_DURATION_US = std::chrono::microseconds(std::chrono::seconds(2)).count();;
 	static const std::unordered_map<ui::Event,ui::LEDSequence> led_sequences_;
 
 	unsigned long run_tasks() override;
@@ -165,6 +173,8 @@ private:
 	uint64_t buzzer_start_time_us_{0};
 	uint64_t buzzer_stop_time_us_{0};
 	bool buzzer_test_{false};
+	uint64_t alarm_level1_time_us_{0};
+	uint64_t alarm_level2_time_us_{0};
 };
 
 } // namespace octavo
