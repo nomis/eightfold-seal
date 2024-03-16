@@ -10,7 +10,7 @@ config OCTAVO_MAX_DOORS
 
 config OCTAVO_SWITCH_ACTIVE_LOW
 	bool "Switches are active low"
-	default n
+	default y
 	help
 		Configure whether switch signalling is active low or high.
 
