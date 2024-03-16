@@ -30,7 +30,7 @@ config OCTAVO_BUZZER_ACTIVE_LOW
 
 config OCTAVO_DEFAULT_ALARM_TIME1_S
 	int "Default alarm level 1 time"
-	range 1 300
+	range 0 300
 	default 30
 	help
 		Configure the default alarm level 1 time in seconds. The alarm
@@ -38,12 +38,12 @@ config OCTAVO_DEFAULT_ALARM_TIME1_S
 
 config OCTAVO_DEFAULT_ALARM_TIME2_S
 	int "Default alarm level 2 time"
-	range 1 300
-	default 30
+	range 0 300
+	default 60
 	help
 		Configure the default alarm level 2 time in seconds. The alarm
-		will be continuous after the alarm has been at level 1 for this
-		duration.
+		will beep continuously after the alarm has been at level 1 for
+		this duration.
 
 config OCTAVO_UI_LED_BRIGHTNESS
 	int "RGB LED brightness"
