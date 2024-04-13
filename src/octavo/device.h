@@ -231,6 +231,7 @@ private:
 	static constexpr const bool OTA_SUPPORTED = CONFIG_OCTAVO_SUPPORT_OTA;
 
 	void reload_app_info(bool full);
+	void reload_core_dump_status();
 	unsigned long run_tasks() override;
 
 	UserInterface &ui_;
