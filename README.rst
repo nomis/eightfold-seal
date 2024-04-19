@@ -1,5 +1,5 @@
-Eightfold Seal
-==============
+Eightfold Seal |Build Status|
+=============================
 
 ESP32 Zigbee door open alarm.
 
@@ -272,3 +272,5 @@ The sensor cluster endpoints are in the following order:
    * - Binaryinput
      - 2n
      - Alarm Status N
+
+.. |Build Status| image:: https://jenkins.uuid.uk/buildStatus/icon?job=eightfold-seal%2Fmain
