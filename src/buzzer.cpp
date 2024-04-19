@@ -25,13 +25,13 @@ namespace octavo {
 
 Buzzer::Buzzer(gpio_num_t pin, bool active_low) : pin_(pin),
 		active_low_(active_low) {
-	gpio_config_t config = {
-		.pin_bit_mask = 1ULL << pin_,
-		.mode = GPIO_MODE_OUTPUT,
-		.pull_up_en = GPIO_PULLUP_DISABLE,
-		.pull_down_en = GPIO_PULLDOWN_DISABLE,
-		.intr_type = GPIO_INTR_DISABLE,
-	};
+	gpio_config_t config{};
+
+	config.pin_bit_mask = 1ULL << pin_;
+	config.mode = GPIO_MODE_OUTPUT;
+	config.pull_up_en = GPIO_PULLUP_DISABLE;
+	config.pull_down_en = GPIO_PULLDOWN_DISABLE;
+	config.intr_type = GPIO_INTR_DISABLE;
 
 	off();
 	ESP_ERROR_CHECK(gpio_config(&config));
