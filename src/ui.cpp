@@ -94,7 +94,7 @@ UserInterface::UserInterface(Logging &logging, Buzzer &buzzer,
 	led_strip_rmt_config_t rmt_config{};
 
 	led_strip_config.max_leds = 1;
-	led_strip_config.strip_gpio_num = 8;
+	led_strip_config.strip_gpio_num = GPIO_NUM_8;
 	led_strip_config.led_model = LED_MODEL_WS2812;
 	led_strip_config.color_component_format = LED_STRIP_COLOR_COMPONENT_FMT_GRB;
 	rmt_config.resolution_hz = 10 * 1000 * 1000;
@@ -103,6 +103,9 @@ UserInterface::UserInterface(Logging &logging, Buzzer &buzzer,
 	set_led(colour::OFF);
 
 	ESP_ERROR_CHECK(uart_set_pin(UART_NUM_0, U0TXD_GPIO_NUM, U0RXD_GPIO_NUM,
+		UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+
+	ESP_ERROR_CHECK(uart_set_pin(UART_NUM_1, UART_PIN_NO_CHANGE, GPIO_NUM_15,
 		UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
 
 	uart_config_t uart_config{};
@@ -116,12 +119,19 @@ UserInterface::UserInterface(Logging &logging, Buzzer &buzzer,
 	ESP_ERROR_CHECK(uart_driver_install(UART_NUM_0, SOC_UART_FIFO_LEN + 1,
 		0, 0, nullptr, ESP_INTR_FLAG_LEVEL1));
 
+	ESP_ERROR_CHECK(uart_param_config(UART_NUM_1, &uart_config));
+	ESP_ERROR_CHECK(uart_driver_install(UART_NUM_1, SOC_UART_FIFO_LEN + 1,
+		0, 0, nullptr, ESP_INTR_FLAG_LEVEL1));
+
 	uart_intr_config_t uart_int_config{};
 	uart_int_config.intr_enable_mask = UART_INTR_RXFIFO_FULL;
 	uart_int_config.rxfifo_full_thresh = 1;
 
 	ESP_ERROR_CHECK(uart_intr_config(UART_NUM_0, &uart_int_config));
 	ESP_ERROR_CHECK(uart_enable_rx_intr(UART_NUM_0));
+
+	ESP_ERROR_CHECK(uart_intr_config(UART_NUM_1, &uart_int_config));
+	ESP_ERROR_CHECK(uart_enable_rx_intr(UART_NUM_1));
 }
 
 void UserInterface::set_led(RGBColour colour) {
@@ -144,7 +154,10 @@ void UserInterface::start() {
 	make_thread(t, "ui_main", 4096, 10, &UserInterface::run_loop, this);
 	t.detach();
 
-	make_thread(t, "ui_uart", 6144, 1, &UserInterface::uart_handler, this);
+	make_thread(t, "ui_uart0", 6144, 1, &UserInterface::uart_handler, this, UART_NUM_0);
+	t.detach();
+
+	make_thread(t, "ui_uart1", 6144, 1, &UserInterface::uart_handler, this, UART_NUM_1);
 	t.detach();
 }
 
@@ -166,11 +179,11 @@ unsigned long UserInterface::run_tasks() {
 	return std::min(std::min(debounce.wait_ms, update_buzzer()), update_led());
 }
 
-void UserInterface::uart_handler() {
+void UserInterface::uart_handler(uart_port_t port) {
 	char buf[1];
 
 	while (true) {
-		if (uart_read_bytes(UART_NUM_0, buf, sizeof(buf), portMAX_DELAY) == 1) {
+		if (uart_read_bytes(port, buf, sizeof(buf), portMAX_DELAY) == 1) {
 			Device *device = device_;
 
 			if (buf[0] == '0') {

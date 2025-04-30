@@ -109,6 +109,9 @@ LED Events
 UART Commands
 ~~~~~~~~~~~~~
 
+There is a second UART RX on GPIO 15 (because the integrated CP2102N has a
+strong pull-up making external connections unusable).
+
 .. list-table::
    :widths: 15 85
    :header-rows: 1

@@ -1,6 +1,6 @@
 /*
  * eightfold-seal - ESP32 Zigbee door alarm
- * Copyright 2024  Simon Arlott
+ * Copyright 2024-2025  Simon Arlott
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 #pragma once
 
 #include <driver/gpio.h>
+#include <driver/uart.h>
 #include <led_strip.h>
 #include <sdkconfig.h>
 
@@ -143,7 +144,7 @@ private:
 	static const std::unordered_map<ui::Event,ui::LEDSequence> led_sequences_;
 
 	unsigned long run_tasks() override;
-	void uart_handler();
+	void uart_handler(uart_port_t port);
 
 	void crash();
 	void print_memory();
