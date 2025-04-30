@@ -426,12 +426,12 @@ void BooleanCluster::configure_switch_cluster_list(esp_zb_cluster_list_t &cluste
 }
 
 void BooleanCluster::configure_binary_input_cluster_list(esp_zb_cluster_list_t &cluster_list) {
-	esp_zb_attribute_list_t *input_cluster = esp_zb_binary_input_cluster_create(nullptr);
+	esp_zb_binary_input_cluster_cfg_t input_cfg{};
 
 	state_ = refresh_value() ? 1 : 0;
+	input_cfg.present_value = state_;
 
-	ESP_ERROR_CHECK(esp_zb_binary_input_cluster_add_attr(input_cluster,
-			ESP_ZB_ZCL_ATTR_BINARY_INPUT_PRESENT_VALUE_ID, &state_));
+	esp_zb_attribute_list_t *input_cluster = esp_zb_binary_input_cluster_create(&input_cfg);
 
 	ESP_ERROR_CHECK(esp_zb_binary_input_cluster_add_attr(input_cluster,
 			ESP_ZB_ZCL_ATTR_BINARY_INPUT_APPLICATION_TYPE_ID, &app_type_));
